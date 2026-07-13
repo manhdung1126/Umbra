@@ -12,7 +12,7 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption('Frostbound: The Last Vanguard') 
+pygame.display.set_caption('Umbra') 
 
 clock = pygame.time.Clock()
 running = True
@@ -34,7 +34,9 @@ while running:
             if event.key == pygame.K_SPACE:
                 player.jump()
             if event.key == pygame.K_u:
-                player.attack()
+                player.attack('attack1')
+            if event.key == pygame.K_i:
+                player.attack('attack2')
                 
     player.update(platforms, WIDTH)
     #RENDER

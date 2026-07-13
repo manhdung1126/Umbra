@@ -8,6 +8,7 @@ class Player:
         self.frame_index = 0
         self.animation_speed = 0.15
         self.animation_speed_attack = 0.3
+        self.attack_type = 'attack1'
         self.image = self.animations[self.status][self.frame_index]
         self.rect = self.image.get_rect(topleft = (x, y))
         self.hitbox = pygame.Rect(0, 0, 40, 50)
@@ -51,13 +52,34 @@ class Player:
             self.velocity_y = self.jump_strength
             self.on_ground = False
 
-    def attack(self):
+    def attack(self, attack_type = 'attack1'):
         current_time = pygame.time.get_ticks()
 
         if not self.attacking and current_time - self.attack_time >= self.cooldown:
+            self.attack_type = attack_type
             self.attacking = True
             self.attack_time = current_time
             self.frame_index = 0
+    
+    def get_attack_hitbox(self):
+        if not self.attacking:
+            return None
+        
+        attack_width = 50
+        attack_heigth = 40
+
+        if self.facing_right:
+            attack_hitbox = pygame.Rect(self.hitbox.right, 
+                                        self.hitbox.centery - attack_heigth // 2,
+                                        attack_width, attack_heigth
+                                        )
+        else :
+            attack_hitbox = pygame.Rect(self.hitbox.left - attack_width, 
+                                        self.hitbox.centery - attack_heigth // 2,
+                                        attack_width, attack_heigth
+                                        )
+        
+        return attack_hitbox
 
     def apply_gravity(self): # Trọng lực rơi
         self.velocity_y += self.gravity
@@ -109,12 +131,13 @@ class Player:
             'run' : import_sprite_sheet('graphics/player/Run.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'jump' : import_sprite_sheet('graphics/player/Jump.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'fall' : import_sprite_sheet('graphics/player/Fall.png', FRAME_SIZE, FRAME_SIZE, SCALE),
-            'attack1' : import_sprite_sheet('graphics/player/Attack 1.png', FRAME_SIZE, FRAME_SIZE, SCALE)
+            'attack1' : import_sprite_sheet('graphics/player/Attack 1.png', FRAME_SIZE, FRAME_SIZE, SCALE),
+            'attack2' : import_sprite_sheet('graphics/player/Attack 2.png', FRAME_SIZE, FRAME_SIZE, SCALE)
         }
 
     def get_status(self):
         if self.attacking:
-            self.status = 'attack1'
+            self.status = self.attack_type
             return
 
         if not self.on_ground:
@@ -129,14 +152,14 @@ class Player:
 
     def animate(self):
         animation = self.animations[self.status]
-        if self.status == 'attack1':
+        if 'attack' in self.status:
             self.frame_index += self.animation_speed_attack
         else: 
             self.frame_index += self.animation_speed
 
         if self.frame_index >= len(animation):
             self.frame_index = 0
-            if self.status == 'attack1':
+            if 'attack' in self.status:
                 self.attacking = False
 
             
@@ -172,4 +195,8 @@ class Player:
     def draw(self, screen):
         screen.blit(self.image, self.rect)
         #Vẽ hitbox
-        #pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 2)
+        pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 2)
+        #vẽ attack_hitbox
+        attack_hitbox = self.get_attack_hitbox()
+        if attack_hitbox:
+            pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 2)
