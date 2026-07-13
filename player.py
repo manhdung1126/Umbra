@@ -1,6 +1,16 @@
 import pygame
 from support import import_sprite_sheet
 
+ATTACK_HIT_WINDOWS = {
+    'attack1': [
+        [3],        
+    ],
+    'attack2': [
+        [3],          
+        [10],
+    ],
+}
+
 class Player:
     def __init__(self, x, y):
         self.import_assets()
@@ -11,8 +21,8 @@ class Player:
         self.attack_type = 'attack1'
         self.image = self.animations[self.status][self.frame_index]
         self.rect = self.image.get_rect(topleft = (x, y))
-        self.hitbox = pygame.Rect(0, 0, 40, 50)
-        self.foot_padding = 63 * 2
+        self.hitbox = pygame.Rect(0, 0, 80, 92)
+        self.foot_padding = 63 * 4
         self.hitbox.midbottom = (
             self.rect.centerx,
             self.rect.bottom - self.foot_padding,   # trừ phần đệm trống ra
@@ -21,6 +31,8 @@ class Player:
         self.attacking = False
         self.cooldown = 500
         self.attack_time = 0
+        self.enemies_hit_attack = set()
+        self.current_hit_window = None
 
         self.direction = pygame.math.Vector2()
         self.velocity_y = 0
@@ -60,23 +72,41 @@ class Player:
             self.attacking = True
             self.attack_time = current_time
             self.frame_index = 0
+            self.enemies_hit_attack.clear()
+            self.current_hit_window = None
     
     def get_attack_hitbox(self):
         if not self.attacking:
             return None
         
-        attack_width = 50
-        attack_heigth = 40
+        current_frame = int(self.frame_index)
+        hit_windows = ATTACK_HIT_WINDOWS.get(self.attack_type,[])
+
+        window_index = None
+        for index, frame_group in enumerate(hit_windows):
+            if current_frame in frame_group:
+                window_index = index
+                break
+        
+        if window_index == None:
+            return None
+        
+        if window_index != self.current_hit_window:
+            self.enemies_hit_attack.clear()
+            self.current_hit_window = window_index
+        
+        attack_width = 120 + 30
+        attack_height = 80
 
         if self.facing_right:
-            attack_hitbox = pygame.Rect(self.hitbox.right, 
-                                        self.hitbox.centery - attack_heigth // 2,
-                                        attack_width, attack_heigth
+            attack_hitbox = pygame.Rect(self.hitbox.right - 30, 
+                                        self.hitbox.centery - attack_height // 2,
+                                        attack_width, attack_height
                                         )
         else :
-            attack_hitbox = pygame.Rect(self.hitbox.left - attack_width, 
-                                        self.hitbox.centery - attack_heigth // 2,
-                                        attack_width, attack_heigth
+            attack_hitbox = pygame.Rect(self.hitbox.left - attack_width + 30, 
+                                        self.hitbox.centery - attack_height // 2,
+                                        attack_width, attack_height
                                         )
         
         return attack_hitbox
@@ -87,14 +117,6 @@ class Player:
 
     def move_x(self): #Di chuyển ngang
         self.hitbox.x += self.direction.x * self.speed
-
-    # def check_collision(self, platforms):  #Va chạm vật thể
-    #     for platform in platforms:
-    #         if self.hitbox.colliderect(platform):
-    #             if self.direction.x > 0:
-    #                 self.hitbox.right = platform.left
-    #             elif self.direction.x < 0:
-    #                 self.hitbox.left = platform.right
 
     def check_collision(self, platforms):
         for platform in platforms:
@@ -125,7 +147,7 @@ class Player:
 
     def import_assets(self):
         FRAME_SIZE = 144
-        SCALE = 2
+        SCALE = 4
         self.animations = {
             'idle' : import_sprite_sheet('graphics/player/Idle.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'run' : import_sprite_sheet('graphics/player/Run.png', FRAME_SIZE, FRAME_SIZE, SCALE),

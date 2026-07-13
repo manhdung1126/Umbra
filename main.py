@@ -1,11 +1,12 @@
 import pygame
 import sys
 from player import Player
+from enemy import Enemy
 
 pygame.init()
 
-HEIGHT = 720
-WIDTH = 1280
+HEIGHT = 900
+WIDTH = 1440
 FPS = 60
 
 BLACK = (0, 0, 0)
@@ -25,6 +26,8 @@ platforms = [pygame.Rect(0, HEIGHT - 80, WIDTH, 80),
             pygame.Rect(600, 380, 200, 30),
             pygame.Rect(900, HEIGHT - 280, 40, 200)]
 
+enemies = [Enemy(700, HEIGHT - 80 - 64)]
+
 while running:
     #Xứ lý ấn nút 
     for event in pygame.event.get():
@@ -39,10 +42,28 @@ while running:
                 player.attack('attack2')
                 
     player.update(platforms, WIDTH)
+    for enemy in enemies:
+        if enemy.alive:
+            enemy.update(platforms, player)
+
+    attack_hitbox = player.get_attack_hitbox()
+    if attack_hitbox:
+        for enemy in enemies:
+            already_hit = enemy in player.enemies_hit_attack
+            if enemy.alive and attack_hitbox.colliderect(enemy.hitbox) and not already_hit:
+                enemy.take_damage(10)
+                player.enemies_hit_attack.add(enemy)
+
+    
+    enemies = [e for e in enemies if e.alive]
+
     #RENDER
     screen.fill('#1c1c2e')
     for platform in platforms :
         pygame.draw.rect(screen, WHITE, platform)
+    
+    for enemy in enemies:
+        enemy.draw(screen)
     
     player.draw(screen)
 
