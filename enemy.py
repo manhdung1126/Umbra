@@ -82,8 +82,10 @@ class Enemy:
 
         if self.state == 'patrol' and distance <= self.notice_radius:
             self.state = 'chase'
+            self.animation_speed *= 2
         elif self.state == 'chase' and distance >= self.give_up_radius:
             self.state = 'patrol'
+            self.animation_speed *= 1/2
 
     def get_status(self, player):
         if not self.alive:
@@ -229,22 +231,23 @@ class Enemy:
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
-        pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 2) 
+        if self.alive:
+            pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 2) 
 
-        # Attack Range (vòng tròn xanh nhạt)
-        pygame.draw.circle(screen, (0, 255, 100, 80), self.hitbox.center, self.attack_range, 2)
+            # Attack Range (vòng tròn xanh nhạt)
+            pygame.draw.circle(screen, (0, 255, 100, 80), self.hitbox.center, self.attack_range, 2)
 
-        # Attack Hitbox (nếu đang attack - màu vàng)
-        attack_hitbox = self.get_attack_hitbox()
-        if attack_hitbox:
-            pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 3)
+            # Attack Hitbox (nếu đang attack - màu vàng)
+            attack_hitbox = self.get_attack_hitbox()
+            if attack_hitbox:
+                pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 3)
 
-        #Thanh máu nhỏ phía trên đầu quái
-        bar_width = self.hitbox.width
-        bar_height = 6
-        bar_x = self.hitbox.x
-        bar_y = self.hitbox.y - bar_height - 4
+            #Thanh máu nhỏ phía trên đầu quái
+            bar_width = self.hitbox.width
+            bar_height = 6
+            bar_x = self.hitbox.x
+            bar_y = self.hitbox.y - bar_height - 4
 
-        health_ratio = self.health / self.max_health
-        pygame.draw.rect(screen, (60, 0, 0), (bar_x, bar_y, bar_width, bar_height))
-        pygame.draw.rect(screen, (0, 200, 0), (bar_x, bar_y, bar_width * health_ratio, bar_height))
+            health_ratio = self.health / self.max_health
+            pygame.draw.rect(screen, (60, 0, 0), (bar_x, bar_y, bar_width, bar_height))
+            pygame.draw.rect(screen, (0, 200, 0), (bar_x, bar_y, bar_width * health_ratio, bar_height))

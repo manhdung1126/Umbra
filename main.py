@@ -65,9 +65,9 @@ while running:
         main_menu.update()
     elif game_state == 'playing':
         # Player
-        if player.alive:
-            player.update(platforms, WIDTH)
-        else:
+        
+        player.update(platforms, WIDTH)
+        if not player.alive:
             for enemy in enemies:
                 enemy.state = 'patrol'
                 enemy.attacking = False
@@ -112,8 +112,7 @@ while running:
         for platform in platforms:
             pygame.draw.rect(screen, WHITE, platform)
         
-        if player.alive:
-            player.draw(screen)
+        player.draw(screen)
         for enemy in enemies:
             enemy.draw(screen)
 

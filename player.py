@@ -18,6 +18,7 @@ class Player:
         self.frame_index = 0
         self.animation_speed = 0.15
         self.animation_speed_attack = 0.3
+        self.animation_speed_death = 0.1
         self.attack_type = 'attack1'
         self.image = self.animations[self.status][self.frame_index]
         self.rect = self.image.get_rect(topleft = (x, y))
@@ -171,6 +172,7 @@ class Player:
             self.health = 0
             self.alive = False
             self.status = 'death'
+            self.frame_index = 0 
             self.invulnerable = True
             self.invulnerable_time = pygame.time.get_ticks()
 
@@ -202,6 +204,8 @@ class Player:
         animation = self.animations[self.status]
         if 'attack' in self.status:
             self.frame_index += self.animation_speed_attack
+        elif self.status == 'death': 
+            self.frame_index += self.animation_speed_death
         else: 
             self.frame_index += self.animation_speed
 
@@ -221,7 +225,6 @@ class Player:
         self.rect = self.image.get_rect(
             midbottom=(self.hitbox.centerx, self.hitbox.bottom + self.foot_padding)
         )
-
 
     def update(self, platforms, width):
         if not self.alive:
@@ -244,20 +247,21 @@ class Player:
         self.update_invulnerable()
 
     def draw(self, screen):
-        if self.invulnerable and pygame.time.get_ticks() % 200 < 100:
+        if self.alive and self.invulnerable and pygame.time.get_ticks() % 200 < 100:
             return
         screen.blit(self.image, self.rect)
-        #Vẽ hitbox
-        pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 2)
-        #vẽ attack_hitbox
-        attack_hitbox = self.get_attack_hitbox()
-        if attack_hitbox:
-            pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 2)
+        if self.alive:
+            #Vẽ hitbox
+            pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 2)
+            #vẽ attack_hitbox
+            attack_hitbox = self.get_attack_hitbox()
+            if attack_hitbox:
+                pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 2)
 
-        bar_width = self.hitbox.width
-        bar_height = 6
-        bar_x = self.hitbox.x
-        bar_y = self.hitbox.y - bar_height - 4
-        health_ratio = self.health / self.max_health
-        pygame.draw.rect(screen, (60, 0, 0), (bar_x, bar_y, bar_width, bar_height))
-        pygame.draw.rect(screen, (0, 200, 0), (bar_x, bar_y, bar_width * health_ratio, bar_height))
+            bar_width = self.hitbox.width
+            bar_height = 6
+            bar_x = self.hitbox.x
+            bar_y = self.hitbox.y - bar_height - 4
+            health_ratio = self.health / self.max_health
+            pygame.draw.rect(screen, (60, 0, 0), (bar_x, bar_y, bar_width, bar_height))
+            pygame.draw.rect(screen, (0, 200, 0), (bar_x, bar_y, bar_width * health_ratio, bar_height))
