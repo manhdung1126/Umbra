@@ -28,6 +28,13 @@ class Player:
             self.rect.bottom - self.foot_padding,   # trừ phần đệm trống ra
         )
 
+        self.max_health = 100
+        self.health = self.max_health
+        self.alive = True
+        self.invulnerable = False
+        self.invulnerable_time = 0
+        self.invulnerable_duration = 800
+
         self.attacking = False
         self.cooldown = 500
         self.attack_time = 0
@@ -39,12 +46,61 @@ class Player:
         self.on_ground = False
         self.facing_right = True
 
-        self.speed = 5
+        self.speed = 8
         self.jump_strength = -15
         self.gravity = 0.6
+    
+    def import_assets(self):
+        FRAME_SIZE = 144
+        SCALE = 4
+        self.animations = {
+            'idle' : import_sprite_sheet('graphics/player/Idle.png', FRAME_SIZE, FRAME_SIZE, SCALE),
+            'run' : import_sprite_sheet('graphics/player/Run.png', FRAME_SIZE, FRAME_SIZE, SCALE),
+            'jump' : import_sprite_sheet('graphics/player/Jump.png', FRAME_SIZE, FRAME_SIZE, SCALE),
+            'fall' : import_sprite_sheet('graphics/player/Fall.png', FRAME_SIZE, FRAME_SIZE, SCALE),
+            'death' : import_sprite_sheet('graphics/player/Death.png', FRAME_SIZE, FRAME_SIZE, SCALE),
+            'attack1' : import_sprite_sheet('graphics/player/Attack 1.png', FRAME_SIZE, FRAME_SIZE, SCALE),
+            'attack2' : import_sprite_sheet('graphics/player/Attack 2.png', FRAME_SIZE, FRAME_SIZE, SCALE)
+        }
+
+    def apply_gravity(self): # Trọng lực rơi
+        self.velocity_y += self.gravity
+        self.hitbox.y += self.velocity_y
+    
+    def limit_screen(self, width): #Chặn 2 bên màn
+        if self.hitbox.left < 0:
+            self.hitbox.left = 0
+        if self.hitbox.right > width:
+            self.hitbox.right = width
+
+    def check_collision(self, platforms):
+        for platform in platforms:
+            if self.hitbox.colliderect(platform):
+                overlap_x = min(self.hitbox.right, platform.right) - max(self.hitbox.left, platform.left)
+                overlap_y = min(self.hitbox.bottom, platform.bottom) - max(self.hitbox.top, platform.top)
+
+                if overlap_x < overlap_y:
+                    old_x = self.hitbox.x
+                    if self.direction.x > 0:
+                        self.hitbox.right = platform.left
+                    elif self.direction.x < 0:
+                        self.hitbox.left = platform.right
+
+    def check_vertical_collisions(self, platforms): # Xử lý rơi chạm đất 
+        self.on_ground = False  
+
+        for platform in platforms:
+            if (self.velocity_y >= 0 and
+                self.hitbox.bottom >= platform.top and
+                self.hitbox.right >= platform.left and
+                self.hitbox.left <= platform.right and
+                self.hitbox.bottom <= platform.top + self.velocity_y + 1):
+                self.hitbox.bottom = platform.top
+                self.velocity_y = 0
+                self.on_ground = True
 
     def get_input(self): #Xử lý giữ phím
-        keys = pygame.key.get_pressed() # Lấy trạng thái phím MỚI NHẤT mỗi frame
+        keys = pygame.key.get_pressed()
         self.direction.x = 0
         if keys[pygame.K_d]:
             self.direction.x = 1
@@ -52,12 +108,9 @@ class Player:
         if keys[pygame.K_a]:
             self.direction.x = -1
             self.facing_right = False
-
-    def limit_screen(self, width): #Chặn 2 bên màn
-        if self.hitbox.left < 0:
-            self.hitbox.left = 0
-        if self.hitbox.right > width:
-            self.hitbox.right = width
+    
+    def move_x(self): #Di chuyển ngang
+        self.hitbox.x += self.direction.x * self.speed
 
     def jump(self): 
         if self.on_ground == True:
@@ -66,7 +119,6 @@ class Player:
 
     def attack(self, attack_type = 'attack1'):
         current_time = pygame.time.get_ticks()
-
         if not self.attacking and current_time - self.attack_time >= self.cooldown:
             self.attack_type = attack_type
             self.attacking = True
@@ -88,7 +140,7 @@ class Player:
                 window_index = index
                 break
         
-        if window_index == None:
+        if window_index is None:
             return None
         
         if window_index != self.current_hit_window:
@@ -110,62 +162,36 @@ class Player:
                                         )
         
         return attack_hitbox
+    
+    def take_damage(self, amount):
+        if self.invulnerable:
+            return
+        self.health -= amount
+        if self.health <= 0:
+            self.health = 0
+            self.alive = False
+            self.status = 'death'
+            self.invulnerable = True
+            self.invulnerable_time = pygame.time.get_ticks()
 
-    def apply_gravity(self): # Trọng lực rơi
-        self.velocity_y += self.gravity
-        self.hitbox.y += self.velocity_y
-
-    def move_x(self): #Di chuyển ngang
-        self.hitbox.x += self.direction.x * self.speed
-
-    def check_collision(self, platforms):
-        for platform in platforms:
-            if self.hitbox.colliderect(platform):
-                overlap_x = min(self.hitbox.right, platform.right) - max(self.hitbox.left, platform.left)
-                overlap_y = min(self.hitbox.bottom, platform.bottom) - max(self.hitbox.top, platform.top)
-
-                if overlap_x < overlap_y:
-                    old_x = self.hitbox.x
-                    if self.direction.x > 0:
-                        self.hitbox.right = platform.left
-                    elif self.direction.x < 0:
-                        self.hitbox.left = platform.right
-                    # print(f'VA CHẠM NGANG: x {old_x:.1f} -> {self.hitbox.x:.1f} (platform={platform})')
-
-    def check_vertical_collisions(self, platforms): # Xử lý rơi chạm đất 
-        self.on_ground = False  
-
-        for platform in platforms:
-            if (self.velocity_y >= 0 and
-                self.hitbox.bottom >= platform.top and
-                self.hitbox.right >= platform.left and
-                self.hitbox.left <= platform.right and
-                self.hitbox.bottom <= platform.top + self.velocity_y + 1):
-                self.hitbox.bottom = platform.top
-                self.velocity_y = 0
-                self.on_ground = True
-
-    def import_assets(self):
-        FRAME_SIZE = 144
-        SCALE = 4
-        self.animations = {
-            'idle' : import_sprite_sheet('graphics/player/Idle.png', FRAME_SIZE, FRAME_SIZE, SCALE),
-            'run' : import_sprite_sheet('graphics/player/Run.png', FRAME_SIZE, FRAME_SIZE, SCALE),
-            'jump' : import_sprite_sheet('graphics/player/Jump.png', FRAME_SIZE, FRAME_SIZE, SCALE),
-            'fall' : import_sprite_sheet('graphics/player/Fall.png', FRAME_SIZE, FRAME_SIZE, SCALE),
-            'attack1' : import_sprite_sheet('graphics/player/Attack 1.png', FRAME_SIZE, FRAME_SIZE, SCALE),
-            'attack2' : import_sprite_sheet('graphics/player/Attack 2.png', FRAME_SIZE, FRAME_SIZE, SCALE)
-        }
+    def update_invulnerable(self):
+        if self.invulnerable:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.invulnerable_time >= self.invulnerable_duration:
+                self.invulnerable = False
 
     def get_status(self):
         if self.attacking:
             self.status = self.attack_type
             return
+        
+        if not self.alive:
+            return
 
         if not self.on_ground:
             if self.velocity_y < 0:
                 self.status = 'jump'
-            if self.velocity_y > 0:
+            else :
                 self.status = 'fall'
         elif self.direction.x != 0:
             self.status = 'run'
@@ -180,9 +206,12 @@ class Player:
             self.frame_index += self.animation_speed
 
         if self.frame_index >= len(animation):
-            self.frame_index = 0
-            if 'attack' in self.status:
-                self.attacking = False
+            if self.status == 'death':
+                self.frame_index = len(animation) - 1
+            else:
+                self.frame_index = 0
+                if 'attack' in self.status:
+                    self.attacking = False
 
             
         self.image = animation[int(self.frame_index)]
@@ -195,26 +224,28 @@ class Player:
 
 
     def update(self, platforms, width):
+        if not self.alive:
+            self.apply_gravity()
+            self.check_vertical_collisions(platforms)
+            self.animate()
+            return
+        
         self.get_input()
-        # if not self.attacking:
+
         self.move_x()
         self.check_collision(platforms)
-
         self.limit_screen(width)
+
         self.apply_gravity()
         self.check_vertical_collisions(platforms)
 
-        # print(f'TRƯỚC gravity: x={self.hitbox.x:.1f} y={self.hitbox.y:.1f} vel_y={self.velocity_y:.1f}')
-        # self.apply_gravity()
-        # print(f'SAU gravity: x={self.hitbox.x:.1f}  y={self.hitbox.y:.1f} vel_y={self.velocity_y:.1f}')
-
-        # self.check_vertical_collisions(platforms)
-        # print(f'SAU vertical_collision: x={self.hitbox.x:.1f} y={self.hitbox.y:.1f} vel_y={self.velocity_y:.1f} on_ground={self.on_ground}')
-
         self.get_status()
         self.animate()
+        self.update_invulnerable()
 
     def draw(self, screen):
+        if self.invulnerable and pygame.time.get_ticks() % 200 < 100:
+            return
         screen.blit(self.image, self.rect)
         #Vẽ hitbox
         pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 2)
@@ -222,3 +253,11 @@ class Player:
         attack_hitbox = self.get_attack_hitbox()
         if attack_hitbox:
             pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 2)
+
+        bar_width = self.hitbox.width
+        bar_height = 6
+        bar_x = self.hitbox.x
+        bar_y = self.hitbox.y - bar_height - 4
+        health_ratio = self.health / self.max_health
+        pygame.draw.rect(screen, (60, 0, 0), (bar_x, bar_y, bar_width, bar_height))
+        pygame.draw.rect(screen, (0, 200, 0), (bar_x, bar_y, bar_width * health_ratio, bar_height))

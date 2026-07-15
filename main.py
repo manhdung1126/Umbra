@@ -32,7 +32,8 @@ platforms = [pygame.Rect(0, HEIGHT - 80, WIDTH, 80),
             pygame.Rect(900, HEIGHT - 280, 40, 200)]
 
 
-enemies = [Enemy(700, HEIGHT - 80 - 64)]
+enemies = [Enemy(600,HEIGHT - 90*4), Enemy(500,HEIGHT - 90*4)]
+
 
 def start_game():
     global player, game_state
@@ -63,45 +64,58 @@ while running:
     if game_state == 'menu':
         main_menu.update()
     elif game_state == 'playing':
-        player.update(platforms, WIDTH) 
-        
-        for enemy in enemies:
-            if enemy.alive:
-                enemy.update(platforms, player)
+        # Player
+        if player.alive:
+            player.update(platforms, WIDTH)
+        else:
+            for enemy in enemies:
+                enemy.state = 'patrol'
+                enemy.attacking = False
+
+
+        # Enemies
+        for enemy in enemies[:]:   
+            enemy.update(platforms, player)
+            
+            if not enemy.alive and enemy.status == 'death' and enemy.frame_index >= len(enemy.animations.get('death', [])) - 2:
+                if enemy in enemies:
+                    enemies.remove(enemy)
 
         # Kiểm tra va chạm đòn tấn công
-        attack_hitbox = player.get_attack_hitbox()
-        if attack_hitbox:
-            for enemy in enemies:
-                if (enemy.alive and 
-                    attack_hitbox.colliderect(enemy.hitbox) and 
-                    enemy not in player.enemies_hit_attack):
-                    enemy.take_damage(10)
-                    player.enemies_hit_attack.add(enemy)
+        if player.alive:
+            attack_hitbox = player.get_attack_hitbox()
+            if attack_hitbox:
+                for enemy in enemies:
+                    if (enemy.alive and 
+                        attack_hitbox.colliderect(enemy.hitbox) and 
+                        enemy not in player.enemies_hit_attack):
+                        enemy.take_damage(10)
+                        player.enemies_hit_attack.add(enemy)
+
+        for enemy in enemies:
+            if enemy.alive:
+                enemy_attack_hitbox = enemy.get_attack_hitbox()
+                if enemy_attack_hitbox and not enemy.player_already_hit:
+                    if enemy_attack_hitbox.colliderect(player.hitbox):
+                        player.take_damage(enemy.attack_damage)
+                        enemy.player_already_hit = True
         
         # Xóa enemy chết
-        enemies[:] = [e for e in enemies if e.alive]
-
-    if game_state == 'menu':
-        main_menu.draw(screen)
-    elif game_state == 'playing':
-        screen.fill('#1c1c2e')
-        for platform in platforms:
-            pygame.draw.rect(screen, WHITE, platform)
-        player.draw(screen)
+        # enemies[:] = [e for e in enemies if e.alive]
 
     #Draw (Render)
     if game_state == 'menu':
         main_menu.draw(screen)
     elif game_state == 'playing':
         screen.fill('#1c1c2e')
+
         for platform in platforms:
             pygame.draw.rect(screen, WHITE, platform)
         
-        player.draw(screen)
+        if player.alive:
+            player.draw(screen)
         for enemy in enemies:
-            if enemy.alive:
-                enemy.draw(screen)
+            enemy.draw(screen)
 
     pygame.display.update()
     clock.tick(FPS)
