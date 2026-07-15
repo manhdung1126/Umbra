@@ -30,7 +30,7 @@ class MenuBackgroundAnimation:
 
         # Tiêu đề game
         self.title = self._load_title('umbra.png', max_width_ratio=0.5)
-        self.title_top_ratio = 0.20  # tâm tiêu đề nằm ở ~28% chiều cao màn hình từ trên xuống
+        self.title_top_ratio = 0.10
 
         # Vị trí cuộn hiện tại của từng lớp
         self.offset_clouds_bg = 0.0
@@ -72,7 +72,6 @@ class MenuBackgroundAnimation:
         self.glow_timer += self.glow_speed
 
     def _glow_alpha(self):
-        # sin dao động -1..1 -> đưa về 0..1 rồi nhân độ mạnh mong muốn
         pulse = (math.sin(self.glow_timer) + 1) / 2
         return int(pulse * self.glow_strength * 255)
 
@@ -98,35 +97,35 @@ class MenuBackgroundAnimation:
     def draw(self, screen):
         alpha = self._glow_alpha()
 
-        # 1) Sky
+        # Sky
         screen.blit(self.sky, (0, 0))
         self.sky_light.set_alpha(alpha)
         screen.blit(self.sky_light, (0, 0))
         self.sky_light.set_alpha(255)
 
-        # 2) Clouds nền
+        # Clouds nền
         self._draw_tile_layer(screen, self.clouds_bg, self.offset_clouds_bg)
 
-        # 3) Glacial mountains
+        # Mountains
         self._draw_tile_layer_with_glow(
             screen, self.mountains, self.mountains_light, 0, alpha
         )
 
-        # 4) Clouds giữa 3
+        # Clouds giữa 3
         self._draw_tile_layer(screen, self.mg3, self.offset_mg3)
 
-        # 5) Clouds giữa 2
+        # Clouds giữa 2
         self._draw_tile_layer(screen, self.mg2, self.offset_mg2)
 
-        # 6) Clouds giữa 1
+        # Clouds giữa 1
         self._draw_tile_layer_with_glow(
             screen, self.mg1, self.mg1_light, self.offset_mg1, alpha
         )
 
-        # 7) Cloud đơn lẻ
+        # Cloud đơn lẻ
         self._draw_tile_layer(screen, self.cloud_lonely, self.offset_lonely)
 
-        # 8) Tiêu đề game
+        # Tiêu đề game
         title_rect = self.title.get_rect()
         title_rect.centerx = self.width // 2
         title_rect.centery = int(self.height * self.title_top_ratio)
