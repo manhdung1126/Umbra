@@ -36,6 +36,12 @@ platforms = [pygame.Rect(0, HEIGHT - 80, WIDTH, 80),
 
 enemies = [Enemy(600,HEIGHT - 90*4), Enemy(500,HEIGHT - 90*4)]
 
+def start_game():
+    global player, enemies, game_state
+    player = Player(100, 100)
+    enemies = [Enemy(600, HEIGHT - 90*4), Enemy(500, HEIGHT - 90*4)]
+    game_state = 'playing'
+
 def draw_game_scene(screen):
     screen.fill('#1c1c2e')
     for platform in platforms:
@@ -53,8 +59,7 @@ while running:
         if game_state == 'menu':
             action = main_menu.handle_event(event)
             if action == 'start':
-                player = Player(100, 100)
-                game_state = 'playing'
+                start_game()
             elif action == 'quit':
                 running = False
 
@@ -71,7 +76,7 @@ while running:
 
         elif game_state == 'paused':
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                game_state = 'playing'  # ấn ESC lần nữa để resume nhanh
+                game_state = 'playing'
 
             action = pause_menu.handle_event(event)
             if action == 'resume':
@@ -82,8 +87,7 @@ while running:
         elif game_state == 'game_over':
             action = game_over_menu.handle_event(event)
             if action == 'restart':
-                player = Player(100, 100)
-                game_state = 'playing'
+                start_game()
             elif action == 'quit':
                 game_state = 'menu'
                 
@@ -91,8 +95,8 @@ while running:
     if game_state == 'menu':
         main_menu.update()
     elif game_state == 'playing':
-        # Player
         
+        # Player
         player.update(platforms, WIDTH)
         if not player.alive:
             for enemy in enemies:
@@ -145,11 +149,11 @@ while running:
         draw_game_scene(screen)
 
     elif game_state == 'paused':
-        draw_game_scene(screen)     # vẽ lại cảnh chơi (đứng yên)
-        pause_menu.draw(screen)     # phủ mờ + 2 nút lên trên
+        draw_game_scene(screen)
+        pause_menu.draw(screen)
 
     elif game_state == 'game_over':
-        draw_game_scene(screen)   # đóng băng khung hình chết cuối
+        draw_game_scene(screen)
         game_over_menu.draw(screen)
 
     pygame.display.update()
