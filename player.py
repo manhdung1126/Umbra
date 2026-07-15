@@ -19,6 +19,7 @@ class Player:
         self.animation_speed = 0.15
         self.animation_speed_attack = 0.3
         self.animation_speed_death = 0.1
+        self.animation_speed_hurt = 0.35
         self.attack_type = 'attack1'
         self.image = self.animations[self.status][self.frame_index]
         self.rect = self.image.get_rect(topleft = (x, y))
@@ -42,6 +43,8 @@ class Player:
         self.enemies_hit_attack = set()
         self.current_hit_window = None
 
+        self.hurt = False
+
         self.direction = pygame.math.Vector2()
         self.velocity_y = 0
         self.on_ground = False
@@ -59,6 +62,7 @@ class Player:
             'run' : import_sprite_sheet('graphics/player/Run.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'jump' : import_sprite_sheet('graphics/player/Jump.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'fall' : import_sprite_sheet('graphics/player/Fall.png', FRAME_SIZE, FRAME_SIZE, SCALE),
+            'hurt' : import_sprite_sheet('graphics/player/Hurt.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'death' : import_sprite_sheet('graphics/player/Death.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'attack1' : import_sprite_sheet('graphics/player/Attack 1.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'attack2' : import_sprite_sheet('graphics/player/Attack 2.png', FRAME_SIZE, FRAME_SIZE, SCALE)
@@ -167,14 +171,21 @@ class Player:
     def take_damage(self, amount):
         if self.invulnerable:
             return
+        
         self.health -= amount
+
         if self.health <= 0:
             self.health = 0
             self.alive = False
             self.status = 'death'
-            self.frame_index = 0 
-            self.invulnerable = True
-            self.invulnerable_time = pygame.time.get_ticks()
+            self.frame_index = 0
+        else:
+            self.hurt = True
+            self.attacking = False
+            self.frame_index = 0
+
+        self.invulnerable = True
+        self.invulnerable_time = pygame.time.get_ticks()
 
     def update_invulnerable(self):
         if self.invulnerable:
@@ -183,11 +194,15 @@ class Player:
                 self.invulnerable = False
 
     def get_status(self):
-        if self.attacking:
-            self.status = self.attack_type
+        if not self.alive:
             return
         
-        if not self.alive:
+        if self.hurt:
+            self.status = 'hurt'
+            return
+
+        if self.attacking:
+            self.status = self.attack_type
             return
 
         if not self.on_ground:
@@ -206,6 +221,8 @@ class Player:
             self.frame_index += self.animation_speed_attack
         elif self.status == 'death': 
             self.frame_index += self.animation_speed_death
+        elif self.status == 'hurt':
+            self.frame_index += self.animation_speed_hurt
         else: 
             self.frame_index += self.animation_speed
 
@@ -216,8 +233,9 @@ class Player:
                 self.frame_index = 0
                 if 'attack' in self.status:
                     self.attacking = False
-
-            
+                elif self.status == 'hurt':
+                    self.hurt = False
+                    
         self.image = animation[int(self.frame_index)]
 
         if not self.facing_right:
@@ -235,10 +253,11 @@ class Player:
         
         self.get_input()
 
-        self.move_x()
-        self.check_collision(platforms)
-        self.limit_screen(width)
+        if not self.hurt:
+            self.move_x()
+            self.check_collision(platforms)
 
+        self.limit_screen(width)
         self.apply_gravity()
         self.check_vertical_collisions(platforms)
 

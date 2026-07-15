@@ -25,6 +25,8 @@ class Enemy:
         self.attack_damage = 15
         self.player_already_hit = False
 
+        self.hurt = False
+
         self.direction = 1
         self.facing_right = True
 
@@ -91,6 +93,10 @@ class Enemy:
         if not self.alive:
             return
         
+        if self.hurt:
+            self.status = 'hurt'
+            return
+        
         if self.state == 'attack':
             self.status = 'attack'
             return
@@ -148,7 +154,11 @@ class Enemy:
         if self.health <= 0:
             self.health = 0
             self.alive = False
-            self.status = 'death'  
+            self.status = 'death'
+        else:
+            self.hurt = True
+            self.attacking = False
+            self.frame_index = 0
 
     # def attack(self):
     #     current_time = pygame.time.get_ticks()
@@ -200,6 +210,8 @@ class Enemy:
                 if self.status == 'attack':
                     self.state = 'chase'
                     self.attacking = False
+                if self.status == 'hurt':
+                    self.hurt = False
 
         image = animation[int(self.frame_index)]
 
@@ -217,11 +229,12 @@ class Enemy:
 
         self.update_state(player)   
 
-        if self.state == 'patrol':
-            self.patrol()
-        elif self.state == 'chase':
-            if not self.attacking:  
-                self.chase_player(player)
+        if not self.hurt:
+            if self.state == 'patrol':
+                self.patrol()
+            elif self.state == 'chase':
+                if not self.attacking:  
+                    self.chase_player(player)
 
         self.apply_gravity()
         self.check_vertical_collisions(platforms)
