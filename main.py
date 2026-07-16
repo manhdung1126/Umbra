@@ -28,8 +28,8 @@ player = None
 
 platforms = [pygame.Rect(0, HEIGHT - 80, WIDTH, 80),
             pygame.Rect(300, 500, 200, 30),              
-            pygame.Rect(600, 380, 200, 30),
-            pygame.Rect(900, HEIGHT - 280, 40, 200)]
+            pygame.Rect(600, 480, 200, 30),
+            pygame.Rect(900, HEIGHT - 180, 40, 100)]
 
 
 enemies = [Enemy(600,HEIGHT - 90*4), Enemy(500,HEIGHT - 90*4)]
@@ -59,6 +59,8 @@ while running:
                     player.attack('attack2')
                 if event.key == pygame.K_ESCAPE:
                     game_state = 'menu'
+                if event.key == pygame.K_j:
+                    player.dash()
                 
     # Update
     if game_state == 'menu':

@@ -53,6 +53,14 @@ class Player:
         self.speed = 8
         self.jump_strength = -15
         self.gravity = 0.6
+
+        self.dashing = False
+        self.dash_time = 0
+        self.dash_duration = 200
+        self.dash_cooldown = 800
+        self.dash_speed = 18
+        self.dash_direction = 1
+        self.animation_speed_dash = 0.2
     
     def import_assets(self):
         FRAME_SIZE = 144
@@ -60,6 +68,7 @@ class Player:
         self.animations = {
             'idle' : import_sprite_sheet('graphics/player/Idle.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'run' : import_sprite_sheet('graphics/player/Run.png', FRAME_SIZE, FRAME_SIZE, SCALE),
+            'dash' : import_sprite_sheet('graphics/player/Dash.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'jump' : import_sprite_sheet('graphics/player/Jump.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'fall' : import_sprite_sheet('graphics/player/Fall.png', FRAME_SIZE, FRAME_SIZE, SCALE),
             'hurt' : import_sprite_sheet('graphics/player/Hurt.png', FRAME_SIZE, FRAME_SIZE, SCALE),
@@ -79,16 +88,17 @@ class Player:
             self.hitbox.right = width
 
     def check_collision(self, platforms):
+        current_dir_x = self.dash_direction if self.dashing else self.direction.x
+
         for platform in platforms:
             if self.hitbox.colliderect(platform):
                 overlap_x = min(self.hitbox.right, platform.right) - max(self.hitbox.left, platform.left)
                 overlap_y = min(self.hitbox.bottom, platform.bottom) - max(self.hitbox.top, platform.top)
 
                 if overlap_x < overlap_y:
-                    old_x = self.hitbox.x
-                    if self.direction.x > 0:
+                    if current_dir_x > 0:
                         self.hitbox.right = platform.left
-                    elif self.direction.x < 0:
+                    elif current_dir_x < 0:
                         self.hitbox.left = platform.right
 
     def check_vertical_collisions(self, platforms): # Xử lý rơi chạm đất 
@@ -113,9 +123,19 @@ class Player:
         if keys[pygame.K_a]:
             self.direction.x = -1
             self.facing_right = False
+        
     
     def move_x(self): #Di chuyển ngang
         self.hitbox.x += self.direction.x * self.speed
+
+    def update_dash(self):
+        current_time = pygame.time.get_ticks()
+
+        if current_time - self.dash_time >= self.dash_duration:
+            self.dashing = False
+            return
+        
+        self.hitbox.x += self.dash_direction * self.dash_speed
 
     def jump(self): 
         if self.on_ground == True:
@@ -131,6 +151,21 @@ class Player:
             self.frame_index = 0
             self.enemies_hit_attack.clear()
             self.current_hit_window = None
+
+    def dash(self):
+        current_time = pygame.time.get_ticks()
+
+        if self.dashing or self.hurt or self.attacking:
+            return
+        
+        if current_time - self.dash_time < self.dash_cooldown:
+            return
+        
+        self.dashing = True
+        self.dash_time = current_time
+        self.dash_direction = 1 if self.facing_right else -1
+        self.frame_index = 0
+
     
     def get_attack_hitbox(self):
         if not self.attacking:
@@ -197,6 +232,10 @@ class Player:
         if not self.alive:
             return
         
+        if self.dashing:
+            self.status = 'dash'
+            return
+
         if self.hurt:
             self.status = 'hurt'
             return
@@ -223,6 +262,8 @@ class Player:
             self.frame_index += self.animation_speed_death
         elif self.status == 'hurt':
             self.frame_index += self.animation_speed_hurt
+        elif self.status == 'dash':
+            self.frame_index += self.animation_speed_dash
         else: 
             self.frame_index += self.animation_speed
 
@@ -253,13 +294,19 @@ class Player:
         
         self.get_input()
 
-        if not self.hurt:
+        if self.dashing:
+            self.update_dash()
+        elif not self.hurt:
             self.move_x()
+
+        if self.dashing or not self.hurt:
             self.check_collision(platforms)
 
         self.limit_screen(width)
-        self.apply_gravity()
-        self.check_vertical_collisions(platforms)
+
+        if not self.dashing:
+            self.apply_gravity()
+            self.check_vertical_collisions(platforms)
 
         self.get_status()
         self.animate()

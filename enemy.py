@@ -3,6 +3,7 @@ from support import import_sprite_sheet
 
 class Enemy:
     def __init__(self, x, y, patrol_range = 150):
+        self.font = pygame.font.SysFont(None, 24)
         self.import_assets()
         self.status = 'walk'
         self.frame_index = 0
@@ -36,7 +37,7 @@ class Enemy:
 
         #Tuần tra
         self.patrol_left_bound = x - patrol_range
-        self.patrol_right_bound = x + patrol_range
+        self.patrol_right_bound = x + patrol_range + 200
         self.speed = 1
         self.chase_speed = 2
         self.state = 'patrol'      
@@ -61,6 +62,23 @@ class Enemy:
         self.velocity_y += self.gravity
         self.hitbox.y += self.velocity_y
 
+    def check_collision(self, platforms):
+        collided = False
+        for platform in platforms:
+            if not self.hitbox.colliderect(platform):
+                continue
+
+            overlap_x = min(self.hitbox.right, platform.right) - max(self.hitbox.left, platform.left)
+            overlap_y = min(self.hitbox.bottom, platform.bottom) - max(self.hitbox.top, platform.top)
+
+            if overlap_x < overlap_y:
+                if self.direction > 0:
+                    self.hitbox.right = platform.left
+                elif self.direction < 0:
+                    self.hitbox.left = platform.right
+                collided = True
+        return collided
+
     def check_vertical_collisions(self, platforms):
         self.on_ground = False
 
@@ -79,17 +97,33 @@ class Enemy:
         player_pos = pygame.math.Vector2(player.hitbox.center)
         return enemy_pos.distance_to(player_pos) - 40
     
-    def update_state(self, player):
-        distance = self.get_distance_to_player(player)
+    def get_distance_horizontal_to_player(self, player):
+        return abs(self.hitbox.centerx - player.hitbox.centerx)
+    
+    def is_the_same_level_with_player(self, player, max_gap_y = 50):
+        return abs(player.hitbox.bottom - self.hitbox.bottom) <= max_gap_y
+    
+    def has_path_to_player(self, player, platforms):
+        left = min(self.hitbox.centerx, player.hitbox.centerx)
+        right = max(self.hitbox.centerx, player.hitbox.centerx)
+        gap = pygame.Rect(left, self.hitbox.top + 1, max(1, right - left), self.hitbox.height - 2)
+        return not any(gap.colliderect(platform) for platform in platforms)
+    
+    def can_interact_with_player(self, player, platforms):
+        return (self.is_the_same_level_with_player(player) and self.has_path_to_player(player, platforms))
+    
+    def update_state(self, player, platforms):
+        distance_x = self.get_distance_horizontal_to_player(player)
+        can_interact = self.can_interact_with_player(player, platforms)
 
-        if self.state == 'patrol' and distance <= self.notice_radius:
+        if self.state == 'patrol' and can_interact and distance_x <= self.notice_radius :
             self.state = 'chase'
             self.animation_speed *= 2
-        elif self.state == 'chase' and distance >= self.give_up_radius:
+        elif self.state == 'chase' and (not can_interact or distance_x >= self.give_up_radius):
             self.state = 'patrol'
             self.animation_speed *= 1/2
 
-    def get_status(self, player):
+    def get_status(self, player, platforms):
         if not self.alive:
             return
         
@@ -103,8 +137,8 @@ class Enemy:
         
         distance = self.get_distance_to_player(player)
         current_time = pygame.time.get_ticks()
-
-        if distance <= self.attack_range and current_time - self.attack_time >= self.cooldown:
+        if (self.can_interact_with_player(player, platforms) and distance <= self.attack_range
+            and current_time - self.attack_time >= self.cooldown):
             self.state = 'attack'
             self.attacking = True
             self.attack_time = current_time
@@ -114,7 +148,7 @@ class Enemy:
         
         if self.state == 'chase':
             distance_x = abs(player.hitbox.centerx - self.hitbox.centerx) - 40
-            stop_distance = self.attack_range
+            stop_distance = self.attack_range - 5
             
             if distance_x > stop_distance:
                 self.status = 'walk'
@@ -122,7 +156,6 @@ class Enemy:
                 self.status = 'idle'
                 
         elif self.state == 'patrol':
-            # Đang đi tuần tra thì luôn đi bộ
             self.status = 'walk'
 
     def patrol(self):
@@ -145,6 +178,7 @@ class Enemy:
 
         distance_x = abs(player.hitbox.centerx - self.hitbox.centerx) - 40
         stop_distance = self.attack_range - 5
+
 
         if distance_x > stop_distance:
             self.hitbox.x += self.direction * self.chase_speed
@@ -227,7 +261,8 @@ class Enemy:
             self.animate()
             return
 
-        self.update_state(player)   
+        self.update_state(player, platforms)
+        
 
         if not self.hurt:
             if self.state == 'patrol':
@@ -235,11 +270,17 @@ class Enemy:
             elif self.state == 'chase':
                 if not self.attacking:  
                     self.chase_player(player)
-
-        self.apply_gravity()
+        
+        hit_wall = self.check_collision(platforms)
+        if hit_wall and self.state == 'patrol':
+            self.direction *= -1
+            self.facing_right = self.direction > 0
+        
         self.check_vertical_collisions(platforms)
+        self.apply_gravity()
+        
 
-        self.get_status(player)
+        self.get_status(player, platforms)
         self.animate()
 
     def draw(self, screen):
@@ -254,6 +295,21 @@ class Enemy:
             attack_hitbox = self.get_attack_hitbox()
             if attack_hitbox:
                 pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 3)
+
+            # === CODE MỚI: VẼ DEBUG TEXT LÊN TRÊN ĐẦU ===
+            # Hiển thị cả State (Quyết định AI) và Status (Hoạt ảnh)
+            debug_text = self.font.render(f"{self.state} | {self.status}", True, (255, 255, 255))
+            # Căn giữa dòng chữ và đặt nó cao hơn thanh máu một chút (y - 15)
+            text_rect = debug_text.get_rect(midbottom=(self.hitbox.centerx, self.hitbox.y - 15))
+            
+            # Vẽ một viền đen mờ lót dưới chữ để dễ đọc nếu nền game sáng
+            bg_rect = text_rect.copy()
+            bg_rect.inflate_ip(4, 4)
+            pygame.draw.rect(screen, (0, 0, 0), bg_rect)
+            
+            # Vẽ chữ lên màn hình
+            screen.blit(debug_text, text_rect)
+            # ============================================
 
             #Thanh máu nhỏ phía trên đầu quái
             bar_width = self.hitbox.width
