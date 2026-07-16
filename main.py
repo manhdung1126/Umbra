@@ -2,7 +2,7 @@ import pygame
 import sys
 from player import Player
 from enemy import Enemy
-from main_menu import MainMenu
+from main_menu import MainMenu, PauseMenu, GameOverMenu
 
 pygame.init()
 
@@ -22,6 +22,8 @@ running = True
 game_state = 'menu'
 
 main_menu = MainMenu(WIDTH, HEIGHT)
+pause_menu = PauseMenu(WIDTH, HEIGHT)
+game_over_menu = GameOverMenu(WIDTH, HEIGHT)
 
 # Khởi tạo vật thể
 player = None
@@ -34,11 +36,19 @@ platforms = [pygame.Rect(0, HEIGHT - 80, WIDTH, 80),
 
 enemies = [Enemy(600,HEIGHT - 90*4), Enemy(500,HEIGHT - 90*4)]
 
-
 def start_game():
-    global player, game_state
+    global player, enemies, game_state
     player = Player(100, 100)
+    enemies = [Enemy(600, HEIGHT - 90*4), Enemy(500, HEIGHT - 90*4)]
     game_state = 'playing'
+
+def draw_game_scene(screen):
+    screen.fill('#1c1c2e')
+    for platform in platforms:
+        pygame.draw.rect(screen, WHITE, platform)
+    player.draw(screen)
+    for enemy in enemies:
+        enemy.draw(screen)
 
 while running:
     #Xứ lý ấn nút 
@@ -47,11 +57,15 @@ while running:
             running = False
 
         if game_state == 'menu':
-            if main_menu.handle_event(event):
+            action = main_menu.handle_event(event)
+            if action == 'start':
                 start_game()
-        elif game_state == 'playing':      
+            elif action == 'quit':
+                running = False
+
+        elif game_state == 'playing':
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:   
+                if event.key == pygame.K_SPACE or event.key == pygame.K_w:
                     player.jump()
                 if event.key == pygame.K_u:
                     player.attack('attack1')
@@ -61,18 +75,39 @@ while running:
                     game_state = 'menu'
                 if event.key == pygame.K_j:
                     player.dash()
+                if event.key == pygame.K_p:
+                    game_state = 'paused'
+
+        elif game_state == 'paused':
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                game_state = 'playing'
+
+            action = pause_menu.handle_event(event)
+            if action == 'resume':
+                game_state = 'playing'
+            elif action == 'quit':
+                game_state = 'menu'
+
+        elif game_state == 'game_over':
+            action = game_over_menu.handle_event(event)
+            if action == 'restart':
+                start_game()
+            elif action == 'quit':
+                game_state = 'menu'
                 
     # Update
     if game_state == 'menu':
         main_menu.update()
     elif game_state == 'playing':
-        # Player
         
+        # Player
         player.update(platforms, WIDTH)
         if not player.alive:
             for enemy in enemies:
                 enemy.state = 'patrol'
                 enemy.attacking = False
+            if player.frame_index >= len(player.animations['death']) - 1:
+                game_state = 'game_over'
 
 
         # Enemies
@@ -104,19 +139,26 @@ while running:
         
         # Xóa enemy chết
         # enemies[:] = [e for e in enemies if e.alive]
+    elif game_state == 'paused':
+        pause_menu.update()
+
+    elif game_state == 'game_over':
+        game_over_menu.update()
 
     #Draw (Render)
     if game_state == 'menu':
         main_menu.draw(screen)
-    elif game_state == 'playing':
-        screen.fill('#1c1c2e')
 
-        for platform in platforms:
-            pygame.draw.rect(screen, WHITE, platform)
-        
-        player.draw(screen)
-        for enemy in enemies:
-            enemy.draw(screen)
+    elif game_state == 'playing':
+        draw_game_scene(screen)
+
+    elif game_state == 'paused':
+        draw_game_scene(screen)
+        pause_menu.draw(screen)
+
+    elif game_state == 'game_over':
+        draw_game_scene(screen)
+        game_over_menu.draw(screen)
 
     pygame.display.update()
     clock.tick(FPS)
