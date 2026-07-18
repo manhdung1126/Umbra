@@ -8,6 +8,7 @@ pygame.init()
 
 HEIGHT = 900
 WIDTH = 1440
+LEVEL_WIDTH = 2880
 FPS = 60
 
 BLACK = (0, 0, 0)
@@ -15,6 +16,8 @@ WHITE = (255, 255, 255)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Umbra') 
+
+world_surface = pygame.Surface((LEVEL_WIDTH,HEIGHT))
 
 clock = pygame.time.Clock()
 running = True
@@ -27,28 +30,32 @@ game_over_menu = GameOverMenu(WIDTH, HEIGHT)
 
 # Khởi tạo vật thể
 player = None
+enemies = []
+camera_x = 0
 
-platforms = [pygame.Rect(0, HEIGHT - 80, WIDTH, 80),
-            pygame.Rect(300, 500, 200, 30),              
-            pygame.Rect(600, 480, 200, 30),
-            pygame.Rect(900, HEIGHT - 180, 40, 100)]
+solid_platforms = [pygame.Rect(0, HEIGHT - 80, LEVEL_WIDTH, 80),
+                    pygame.Rect(900, HEIGHT - 180, 40, 100)]
 
+one_way_platforms = [pygame.Rect(300, 600, 200, 30),              
+                    pygame.Rect(600, 480, 200, 30)]
 
-enemies = [Enemy(600,HEIGHT - 90*4), Enemy(500,HEIGHT - 90*4)]
+all_platforms = solid_platforms + one_way_platforms
 
 def start_game():
-    global player, enemies, game_state
+    global player, enemies, game_state, camera_x
     player = Player(100, 100)
     enemies = [Enemy(600, HEIGHT - 90*4), Enemy(500, HEIGHT - 90*4)]
+    camera_x = 0
     game_state = 'playing'
 
 def draw_game_scene(screen):
-    screen.fill('#1c1c2e')
-    for platform in platforms:
-        pygame.draw.rect(screen, WHITE, platform)
-    player.draw(screen)
+    world_surface.fill('#1c1c2e')
+    for platform in all_platforms:
+        pygame.draw.rect(world_surface, WHITE, platform)
+    player.draw(world_surface)
     for enemy in enemies:
-        enemy.draw(screen)
+        enemy.draw(world_surface)
+    screen.blit(world_surface,(-camera_x,0))
 
 while running:
     #Xứ lý ấn nút 
@@ -101,7 +108,7 @@ while running:
     elif game_state == 'playing':
         
         # Player
-        player.update(platforms, WIDTH)
+        player.update(solid_platforms, all_platforms, LEVEL_WIDTH)
         if not player.alive:
             for enemy in enemies:
                 enemy.state = 'patrol'
@@ -112,11 +119,16 @@ while running:
 
         # Enemies
         for enemy in enemies[:]:   
-            enemy.update(platforms, player)
+            enemy.update(solid_platforms, all_platforms, player)
             
             if not enemy.alive and enemy.status == 'death' and enemy.frame_index >= len(enemy.animations.get('death', [])) - 2:
                 if enemy in enemies:
                     enemies.remove(enemy)
+
+        # Camera 
+        target_camera_x = player.hitbox.x - WIDTH * 0.45
+        target_camera_x = max(0, min(target_camera_x, LEVEL_WIDTH - WIDTH))
+        camera_x += (target_camera_x - camera_x) * 0.12
 
         # Kiểm tra va chạm đòn tấn công
         if player.alive:

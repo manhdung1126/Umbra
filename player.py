@@ -87,10 +87,10 @@ class Player:
         if self.hitbox.right > width:
             self.hitbox.right = width
 
-    def check_collision(self, platforms):
+    def check_collision(self, solid_platforms):
         current_dir_x = self.dash_direction if self.dashing else self.direction.x
 
-        for platform in platforms:
+        for platform in solid_platforms:
             if self.hitbox.colliderect(platform):
                 overlap_x = min(self.hitbox.right, platform.right) - max(self.hitbox.left, platform.left)
                 overlap_y = min(self.hitbox.bottom, platform.bottom) - max(self.hitbox.top, platform.top)
@@ -101,10 +101,10 @@ class Player:
                     elif current_dir_x < 0:
                         self.hitbox.left = platform.right
 
-    def check_vertical_collisions(self, platforms): # Xử lý rơi chạm đất 
+    def check_vertical_collisions(self, all_platforms): # Xử lý rơi chạm đất 
         self.on_ground = False  
 
-        for platform in platforms:
+        for platform in all_platforms:
             if (self.velocity_y >= 0 and
                 self.hitbox.bottom >= platform.top and
                 self.hitbox.right >= platform.left and
@@ -285,10 +285,10 @@ class Player:
             midbottom=(self.hitbox.centerx, self.hitbox.bottom + self.foot_padding)
         )
 
-    def update(self, platforms, width):
+    def update(self, solid_platforms, all_platforms, width):
         if not self.alive:
             self.apply_gravity()
-            self.check_vertical_collisions(platforms)
+            self.check_vertical_collisions(all_platforms)
             self.animate()
             return
         
@@ -300,13 +300,13 @@ class Player:
             self.move_x()
 
         if self.dashing or not self.hurt:
-            self.check_collision(platforms)
+            self.check_collision(solid_platforms)
 
         self.limit_screen(width)
 
         if not self.dashing:
             self.apply_gravity()
-            self.check_vertical_collisions(platforms)
+            self.check_vertical_collisions(all_platforms)
 
         self.get_status()
         self.animate()

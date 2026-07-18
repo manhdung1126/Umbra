@@ -256,12 +256,12 @@ class Enemy:
         self.rect = self.image.get_rect(midbottom=self.hitbox.midbottom)
 
 
-    def update(self, platforms, player):
+    def update(self,solid_platforms, all_platforms, player):
         if not self.alive:
             self.animate()
             return
 
-        self.update_state(player, platforms)
+        self.update_state(player, all_platforms)
         
 
         if not self.hurt:
@@ -271,16 +271,16 @@ class Enemy:
                 if not self.attacking:  
                     self.chase_player(player)
         
-        hit_wall = self.check_collision(platforms)
+        hit_wall = self.check_collision(solid_platforms)
         if hit_wall and self.state == 'patrol':
             self.direction *= -1
             self.facing_right = self.direction > 0
         
-        self.check_vertical_collisions(platforms)
+        self.check_vertical_collisions(all_platforms)
         self.apply_gravity()
         
 
-        self.get_status(player, platforms)
+        self.get_status(player, all_platforms)
         self.animate()
 
     def draw(self, screen):
