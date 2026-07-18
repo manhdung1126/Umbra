@@ -296,7 +296,6 @@ class Enemy:
             if attack_hitbox:
                 pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 3)
 
-            # === CODE MỚI: VẼ DEBUG TEXT LÊN TRÊN ĐẦU ===
             # Hiển thị cả State (Quyết định AI) và Status (Hoạt ảnh)
             debug_text = self.font.render(f"{self.state} | {self.status}", True, (255, 255, 255))
             # Căn giữa dòng chữ và đặt nó cao hơn thanh máu một chút (y - 15)
@@ -309,7 +308,6 @@ class Enemy:
             
             # Vẽ chữ lên màn hình
             screen.blit(debug_text, text_rect)
-            # ============================================
 
             #Thanh máu nhỏ phía trên đầu quái
             bar_width = self.hitbox.width

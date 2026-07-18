@@ -2,6 +2,7 @@ import pygame
 import sys
 from player import Player
 from enemy import Enemy
+from ui import UI
 from main_menu import MainMenu, PauseMenu, GameOverMenu
 
 pygame.init()
@@ -27,6 +28,9 @@ game_state = 'menu'
 main_menu = MainMenu(WIDTH, HEIGHT)
 pause_menu = PauseMenu(WIDTH, HEIGHT)
 game_over_menu = GameOverMenu(WIDTH, HEIGHT)
+
+ui = UI(WIDTH, HEIGHT)
+
 
 # Khởi tạo vật thể
 player = None
@@ -160,10 +164,9 @@ while running:
     #Draw (Render)
     if game_state == 'menu':
         main_menu.draw(screen)
-
     elif game_state == 'playing':
         draw_game_scene(screen)
-
+        ui.draw_health_bar(screen, player.health, player.max_health)
     elif game_state == 'paused':
         draw_game_scene(screen)
         pause_menu.draw(screen)
