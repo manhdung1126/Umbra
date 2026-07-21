@@ -11,10 +11,10 @@ class Enemy:
         self.animation_speed_attack = 0.12
         self.animation_speed_death = 0.08
         self.image = self.animations[self.status][int(self.frame_index)]
-        self.rect = self.image.get_rect(topleft=(x, y))
 
         self.hitbox = pygame.Rect(0, 0, 140, 160)  
-        self.hitbox.midbottom = self.rect.midbottom
+        self.hitbox.bottomleft = (x, y)
+        self.rect = self.image.get_rect(midbottom=self.hitbox.midbottom)
         self.max_health = 50
         self.health = self.max_health
         self.alive = True

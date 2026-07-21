@@ -4,12 +4,13 @@ from player import Player
 from enemy import Enemy
 from ui import UI
 from main_menu import MainMenu, PauseMenu, GameOverMenu
+from tilemap import build_solid_rect_from_csv, get_map_size, load_csv_map, build_tile_cache, draw_tile_layer
 
 pygame.init()
 
 HEIGHT = 900
 WIDTH = 1440
-LEVEL_WIDTH = 2880
+LEVEL_WIDTH, LEVEL_HEIGHT = get_map_size('Map/level1_solid.csv')
 FPS = 60
 
 BLACK = (0, 0, 0)
@@ -18,7 +19,7 @@ WHITE = (255, 255, 255)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Umbra') 
 
-world_surface = pygame.Surface((LEVEL_WIDTH,HEIGHT))
+world_surface = pygame.Surface((LEVEL_WIDTH,LEVEL_HEIGHT))
 
 clock = pygame.time.Clock()
 running = True
@@ -37,29 +38,44 @@ player = None
 enemies = []
 camera_x = 0
 
-solid_platforms = [pygame.Rect(0, HEIGHT - 80, LEVEL_WIDTH, 80),
-                    pygame.Rect(900, HEIGHT - 180, 40, 100)]
-
-one_way_platforms = [pygame.Rect(300, 600, 200, 30),              
-                    pygame.Rect(600, 480, 200, 30)]
-
+solid_platforms = build_solid_rect_from_csv('Map/level1_solid.csv')
+one_way_platforms = build_solid_rect_from_csv('Map/level1_oneway.csv')
 all_platforms = solid_platforms + one_way_platforms
 
+solid_grid = load_csv_map('Map/level1_solid.csv')
+one_way_grid = load_csv_map('Map/level1_oneway.csv')
+
+tile_cache = build_tile_cache('Map/Snow platform tileset.png')
+
 def start_game():
-    global player, enemies, game_state, camera_x
-    player = Player(100, 100)
-    enemies = [Enemy(600, HEIGHT - 90*4), Enemy(500, HEIGHT - 90*4)]
+    global player, enemies, game_state, camera_x, camera_y
+    player = Player(0,528)
+    enemies = [Enemy(1536, 960), Enemy(2114,624), Enemy(3482, 864), Enemy(5224,528)]
     camera_x = 0
+    camera_y = 0
     game_state = 'playing'
 
 def draw_game_scene(screen):
     world_surface.fill('#1c1c2e')
-    for platform in all_platforms:
-        pygame.draw.rect(world_surface, WHITE, platform)
+    draw_tile_layer(world_surface, solid_grid, tile_cache)
+    draw_tile_layer(world_surface, one_way_grid, tile_cache)
     player.draw(world_surface)
     for enemy in enemies:
         enemy.draw(world_surface)
-    screen.blit(world_surface,(-camera_x,0))
+    screen.blit(world_surface,(-int(camera_x), -int(camera_y)))
+
+def get_camera_offset(player, level_width, level_height, screen_width, screen_height):
+    #Tính camera theo player và giữ camera trong biên level.
+    camera_x = player.hitbox.centerx - screen_width // 2
+    camera_y = player.hitbox.centery - screen_height // 2
+
+    max_camera_x = max(0, level_width - screen_width)
+    max_camera_y = max(0, level_height - screen_height)
+
+    camera_x = max(0, min(camera_x, max_camera_x))
+    camera_y = max(0, min(camera_y, max_camera_y))
+
+    return camera_x, camera_y
 
 while running:
     #Xứ lý ấn nút 
@@ -130,9 +146,10 @@ while running:
                     enemies.remove(enemy)
 
         # Camera 
-        target_camera_x = player.hitbox.x - WIDTH * 0.45
-        target_camera_x = max(0, min(target_camera_x, LEVEL_WIDTH - WIDTH))
-        camera_x += (target_camera_x - camera_x) * 0.12
+        target_x, target_y = get_camera_offset(player, LEVEL_WIDTH, LEVEL_HEIGHT, WIDTH, HEIGHT)
+
+        camera_x += (target_x - camera_x) * 0.12
+        camera_y += (target_y - camera_y) * 0.12
 
         # Kiểm tra va chạm đòn tấn công
         if player.alive:
