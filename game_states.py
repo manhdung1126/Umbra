@@ -73,6 +73,10 @@ class PlayingState(State):
         target_camera_x = max(0, min(target_camera_x, game.LEVEL_WIDTH - game.WIDTH))
         game.camera_x += (target_camera_x - game.camera_x) * 0.12
 
+        target_camera_y = player.hitbox.centery - game.HEIGHT * 0.5
+        target_camera_y = max(0, min(target_camera_y, game.LEVEL_HEIGHT - game.HEIGHT))
+        game.camera_y += (target_camera_y - game.camera_y) * 0.12
+
         # Kiểm tra va chạm đòn tấn công của player
         if player.alive:
             attack_hitbox = player.get_attack_hitbox()

@@ -11,10 +11,10 @@ class Enemy:
         self.animation_speed_attack = 0.12
         self.animation_speed_death = 0.08
         self.image = self.animations[self.status][int(self.frame_index)]
-        self.rect = self.image.get_rect(topleft=(x, y))
 
         self.hitbox = pygame.Rect(0, 0, 140, 160)  
-        self.hitbox.midbottom = self.rect.midbottom
+        self.hitbox.bottomleft = (x, y)
+        self.rect = self.image.get_rect(midbottom=self.hitbox.midbottom)
         self.max_health = 50
         self.health = self.max_health
         self.alive = True
@@ -194,14 +194,6 @@ class Enemy:
             self.attacking = False
             self.frame_index = 0
 
-    # def attack(self):
-    #     current_time = pygame.time.get_ticks()
-    #     if not self.attacking and current_time - self.attack_time >= self.cooldown:
-    #         self.attacking = True
-    #         self.attack_time = current_time
-    #         self.frame_index = 0
-    #         self.player_already_hit = False
-
     def get_attack_hitbox(self):
         if not self.attacking:
             return None
@@ -295,21 +287,6 @@ class Enemy:
             attack_hitbox = self.get_attack_hitbox()
             if attack_hitbox:
                 pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 3)
-
-            # === CODE MỚI: VẼ DEBUG TEXT LÊN TRÊN ĐẦU ===
-            # Hiển thị cả State (Quyết định AI) và Status (Hoạt ảnh)
-            debug_text = self.font.render(f"{self.state} | {self.status}", True, (255, 255, 255))
-            # Căn giữa dòng chữ và đặt nó cao hơn thanh máu một chút (y - 15)
-            text_rect = debug_text.get_rect(midbottom=(self.hitbox.centerx, self.hitbox.y - 15))
-            
-            # Vẽ một viền đen mờ lót dưới chữ để dễ đọc nếu nền game sáng
-            bg_rect = text_rect.copy()
-            bg_rect.inflate_ip(4, 4)
-            pygame.draw.rect(screen, (0, 0, 0), bg_rect)
-            
-            # Vẽ chữ lên màn hình
-            screen.blit(debug_text, text_rect)
-            # ============================================
 
             #Thanh máu nhỏ phía trên đầu quái
             bar_width = self.hitbox.width

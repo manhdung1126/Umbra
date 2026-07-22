@@ -22,12 +22,11 @@ class Player:
         self.animation_speed_hurt = 0.35
         self.attack_type = 'attack1'
         self.image = self.animations[self.status][self.frame_index]
-        self.rect = self.image.get_rect(topleft = (x, y))
         self.hitbox = pygame.Rect(0, 0, 80, 92)
         self.foot_padding = 63 * 4
-        self.hitbox.midbottom = (
-            self.rect.centerx,
-            self.rect.bottom - self.foot_padding,   # trừ phần đệm trống ra
+        self.hitbox.bottomleft = (x, y)
+        self.rect = self.image.get_rect(
+            midbottom=(self.hitbox.centerx, self.hitbox.bottom + self.foot_padding)
         )
 
         self.max_health = 100
@@ -81,25 +80,32 @@ class Player:
         self.velocity_y += self.gravity
         self.hitbox.y += self.velocity_y
     
-    def limit_screen(self, width): #Chặn 2 bên màn
+    def limit_screen(self, level_width): #Chặn 2 bên màn
         if self.hitbox.left < 0:
             self.hitbox.left = 0
-        if self.hitbox.right > width:
-            self.hitbox.right = width
+        if self.hitbox.right > level_width:
+            self.hitbox.right = level_width
 
-    def check_collision(self, solid_platforms):
+    def check_solid_x_collisions(self, solid_platforms):
         current_dir_x = self.dash_direction if self.dashing else self.direction.x
 
         for platform in solid_platforms:
             if self.hitbox.colliderect(platform):
-                overlap_x = min(self.hitbox.right, platform.right) - max(self.hitbox.left, platform.left)
-                overlap_y = min(self.hitbox.bottom, platform.bottom) - max(self.hitbox.top, platform.top)
+                if current_dir_x > 0:
+                    self.hitbox.right = platform.left
+                elif current_dir_x < 0:
+                    self.hitbox.left = platform.right
 
-                if overlap_x < overlap_y:
-                    if current_dir_x > 0:
-                        self.hitbox.right = platform.left
-                    elif current_dir_x < 0:
-                        self.hitbox.left = platform.right
+    def check_solid_y_collisions(self, solid_platforms):
+        for platform in solid_platforms:
+            if self.hitbox.colliderect(platform):
+                if self.velocity_y > 0:
+                    self.hitbox.bottom = platform.top
+                    self.velocity_y = 0
+                    self.on_ground = True
+                elif self.velocity_y < 0:
+                    self.hitbox.top = platform.bottom
+                    self.velocity_y = 0
 
     def check_vertical_collisions(self, all_platforms): # Xử lý rơi chạm đất 
         self.on_ground = False  
@@ -107,8 +113,8 @@ class Player:
         for platform in all_platforms:
             if (self.velocity_y >= 0 and
                 self.hitbox.bottom >= platform.top and
-                self.hitbox.right >= platform.left and
-                self.hitbox.left <= platform.right and
+                self.hitbox.right > platform.left and
+                self.hitbox.left < platform.right and
                 self.hitbox.bottom <= platform.top + self.velocity_y + 1):
                 self.hitbox.bottom = platform.top
                 self.velocity_y = 0
@@ -285,7 +291,7 @@ class Player:
             midbottom=(self.hitbox.centerx, self.hitbox.bottom + self.foot_padding)
         )
 
-    def update(self, solid_platforms, all_platforms, width):
+    def update(self, solid_platforms, all_platforms, level_width):
         if not self.alive:
             self.apply_gravity()
             self.check_vertical_collisions(all_platforms)
@@ -300,17 +306,20 @@ class Player:
             self.move_x()
 
         if self.dashing or not self.hurt:
-            self.check_collision(solid_platforms)
+            self.check_solid_x_collisions(solid_platforms)
 
-        self.limit_screen(width)
+        self.limit_screen(level_width)
 
         if not self.dashing:
             self.apply_gravity()
+            self.on_ground = False
+            self.check_solid_y_collisions(solid_platforms)
             self.check_vertical_collisions(all_platforms)
 
         self.get_status()
         self.animate()
         self.update_invulnerable()
+        print(f"Pos x: {self.hitbox.left}, y: {self.hitbox.bottom}")
 
     def draw(self, screen):
         if self.alive and self.invulnerable and pygame.time.get_ticks() % 200 < 100:
@@ -323,11 +332,3 @@ class Player:
             attack_hitbox = self.get_attack_hitbox()
             if attack_hitbox:
                 pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 2)
-
-            bar_width = self.hitbox.width
-            bar_height = 6
-            bar_x = self.hitbox.x
-            bar_y = self.hitbox.y - bar_height - 4
-            health_ratio = self.health / self.max_health
-            pygame.draw.rect(screen, (60, 0, 0), (bar_x, bar_y, bar_width, bar_height))
-            pygame.draw.rect(screen, (0, 200, 0), (bar_x, bar_y, bar_width * health_ratio, bar_height))
