@@ -49,8 +49,8 @@ tile_cache = build_tile_cache('Map/Snow platform tileset.png')
 
 def start_game():
     global player, enemies, game_state, camera_x, camera_y
-    player = Player(0,528)
-    enemies = [Enemy(1536, 960), Enemy(2114,624), Enemy(3482, 864), Enemy(5224,528)]
+    player = Player(48,1152)
+    enemies = [Enemy(1168, 1280), Enemy(1776, 1216), Enemy(2512, 1216), Enemy(3272, 1216), Enemy(4056, 640), Enemy(7048, 448)]
     camera_x = 0
     camera_y = 0
     game_state = 'playing'

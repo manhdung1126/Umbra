@@ -73,7 +73,7 @@ def build_tile_cache(tileset_path):
 def draw_tile_layer(surface, grid, tile_cache):
     for row_index, row in enumerate(grid):
         for col_index, tile_id in enumerate(row):
-            if tile_id in EMPTY_TILE_IDS:
+            if tile_id in EMPTY_TILE:
                 continue
 
             surface.blit(

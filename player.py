@@ -319,7 +319,7 @@ class Player:
         self.get_status()
         self.animate()
         self.update_invulnerable()
-        print(f"Enemy Spawn Pos -> x: {self.hitbox.left}, y: {self.hitbox.bottom}")
+        print(f"Pos x: {self.hitbox.left}, y: {self.hitbox.bottom}")
 
     def draw(self, screen):
         if self.alive and self.invulnerable and pygame.time.get_ticks() % 200 < 100:
