@@ -168,19 +168,3 @@ class GameOverMenu:
         screen.blit(self.overlay, (0, 0))
         draw_button(screen, self.restart_button_img, self.restart_button_rect, self.is_hovering_restart, self.hover_scale)
         draw_button(screen, self.quit_button_img, self.quit_button_rect, self.is_hovering_quit, self.hover_scale)
-
-
-class VictoryMenu(GameOverMenu):
-    def __init__(self, width, height):
-        super().__init__(width, height)
-        self.title_font = pygame.font.SysFont(None, 72)
-        self.subtitle_font = pygame.font.SysFont(None, 32)
-
-    def draw(self, screen):
-        super().draw(screen)
-
-        title = self.title_font.render('LEVEL COMPLETE!', True, (255, 230, 120))
-        subtitle = self.subtitle_font.render('The path forward is open.', True, (255, 255, 255))
-
-        screen.blit(title, title.get_rect(center=(self.width // 2, self.height // 2 - 180)))
-        screen.blit(subtitle, subtitle.get_rect(center=(self.width // 2, self.height // 2 - 125)))

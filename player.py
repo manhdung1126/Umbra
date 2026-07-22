@@ -332,11 +332,3 @@ class Player:
             attack_hitbox = self.get_attack_hitbox()
             if attack_hitbox:
                 pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 2)
-
-            # bar_width = self.hitbox.width
-            # bar_height = 6
-            # bar_x = self.hitbox.x
-            # bar_y = self.hitbox.y - bar_height - 4
-            # health_ratio = self.health / self.max_health
-            # pygame.draw.rect(screen, (60, 0, 0), (bar_x, bar_y, bar_width, bar_height))
-            # pygame.draw.rect(screen, (0, 200, 0), (bar_x, bar_y, bar_width * health_ratio, bar_height))

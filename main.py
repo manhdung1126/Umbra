@@ -102,7 +102,7 @@ while running:
                     game_state = 'menu'
                 if event.key == pygame.K_j:
                     player.dash()
-                if event.key == pygame.K_p:
+                if event.key == pygame.K_ESCAPE:
                     game_state = 'paused'
 
         elif game_state == 'paused':
