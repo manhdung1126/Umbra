@@ -3,8 +3,9 @@ import sys
 from player import Player
 from enemy import Enemy
 from ui import UI
+from chest import Chest
 from main_menu import MainMenu, PauseMenu, GameOverMenu
-from tilemap import build_solid_rect_from_csv, get_map_size, load_csv_map, build_tile_cache, draw_tile_layer
+from tilemap import build_rect_from_csv, get_map_size, load_csv_map, build_tile_cache, draw_tile_layer
 
 pygame.init()
 
@@ -38,19 +39,23 @@ player = None
 enemies = []
 camera_x = 0
 
-solid_platforms = build_solid_rect_from_csv('Map/level1_solid.csv')
-one_way_platforms = build_solid_rect_from_csv('Map/level1_oneway.csv')
+solid_platforms = build_rect_from_csv('Map/level1_solid.csv')
+one_way_platforms = build_rect_from_csv('Map/level1_oneway.csv')
+
 all_platforms = solid_platforms + one_way_platforms
 
 solid_grid = load_csv_map('Map/level1_solid.csv')
 one_way_grid = load_csv_map('Map/level1_oneway.csv')
+decor_back_grid = load_csv_map('Map/level1_decorback.csv')
+decor_front_grid = load_csv_map('Map/level1_decorfront.csv')
 
 tile_cache = build_tile_cache('Map/Snow platform tileset.png')
 
 def start_game():
-    global player, enemies, game_state, camera_x, camera_y
+    global player, enemies, chests, game_state, camera_x, camera_y
     player = Player(48,1152)
     enemies = [Enemy(1168, 1280), Enemy(1776, 1216), Enemy(2512, 1216), Enemy(3272, 1216), Enemy(4056, 640), Enemy(7048, 448)]
+    chests = [Chest(4128, 576), Chest(1304, 1280)]
     camera_x = 0
     camera_y = 0
     game_state = 'playing'
@@ -59,9 +64,13 @@ def draw_game_scene(screen):
     world_surface.fill('#1c1c2e')
     draw_tile_layer(world_surface, solid_grid, tile_cache)
     draw_tile_layer(world_surface, one_way_grid, tile_cache)
+    draw_tile_layer(world_surface, decor_back_grid, tile_cache)
+    draw_tile_layer(world_surface, decor_front_grid, tile_cache)
     player.draw(world_surface)
     for enemy in enemies:
         enemy.draw(world_surface)
+    for chest in chests:
+        chest.draw(world_surface, player)
     screen.blit(world_surface,(-int(camera_x), -int(camera_y)))
 
 def get_camera_offset(player, level_width, level_height, screen_width, screen_height):
@@ -102,6 +111,10 @@ while running:
                     game_state = 'menu'
                 if event.key == pygame.K_j:
                     player.dash()
+                if event.key == pygame.K_e:
+                    for chest in chests:
+                        if chest.can_interact(player):
+                            chest.open(player)
                 if event.key == pygame.K_p:
                     game_state = 'paused'
 
@@ -128,7 +141,7 @@ while running:
     elif game_state == 'playing':
         
         # Player
-        player.update(solid_platforms, all_platforms, LEVEL_WIDTH)
+        player.update(solid_platforms, all_platforms, LEVEL_WIDTH, LEVEL_HEIGHT)
         if not player.alive:
             for enemy in enemies:
                 enemy.state = 'patrol'
