@@ -194,14 +194,6 @@ class Enemy:
             self.attacking = False
             self.frame_index = 0
 
-    # def attack(self):
-    #     current_time = pygame.time.get_ticks()
-    #     if not self.attacking and current_time - self.attack_time >= self.cooldown:
-    #         self.attacking = True
-    #         self.attack_time = current_time
-    #         self.frame_index = 0
-    #         self.player_already_hit = False
-
     def get_attack_hitbox(self):
         if not self.attacking:
             return None
@@ -301,7 +293,6 @@ class Enemy:
             # Căn giữa dòng chữ và đặt nó cao hơn thanh máu một chút (y - 15)
             text_rect = debug_text.get_rect(midbottom=(self.hitbox.centerx, self.hitbox.y - 15))
             
-            # Vẽ một viền đen mờ lót dưới chữ để dễ đọc nếu nền game sáng
             bg_rect = text_rect.copy()
             bg_rect.inflate_ip(4, 4)
             pygame.draw.rect(screen, (0, 0, 0), bg_rect)
