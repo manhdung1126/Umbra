@@ -2,12 +2,16 @@ import pygame
 import sys
 from player import Player
 from enemy import Enemy
+from ui import UI
+from chest import Chest
 from main_menu import MainMenu, PauseMenu, GameOverMenu
+from tilemap import build_rect_from_csv, get_map_size, load_csv_map, build_tile_cache, draw_tile_layer
 
 pygame.init()
 
 HEIGHT = 900
 WIDTH = 1440
+LEVEL_WIDTH, LEVEL_HEIGHT = get_map_size('Map/level1_solid.csv')
 FPS = 60
 
 BLACK = (0, 0, 0)
@@ -15,6 +19,8 @@ WHITE = (255, 255, 255)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Umbra') 
+
+world_surface = pygame.Surface((LEVEL_WIDTH,LEVEL_HEIGHT))
 
 clock = pygame.time.Clock()
 running = True
@@ -25,30 +31,60 @@ main_menu = MainMenu(WIDTH, HEIGHT)
 pause_menu = PauseMenu(WIDTH, HEIGHT)
 game_over_menu = GameOverMenu(WIDTH, HEIGHT)
 
+ui = UI(WIDTH, HEIGHT)
+
+
 # Khởi tạo vật thể
 player = None
+enemies = []
+camera_x = 0
 
-platforms = [pygame.Rect(0, HEIGHT - 80, WIDTH, 80),
-            pygame.Rect(300, 500, 200, 30),              
-            pygame.Rect(600, 480, 200, 30),
-            pygame.Rect(900, HEIGHT - 180, 40, 100)]
+solid_platforms = build_rect_from_csv('Map/level1_solid.csv')
+one_way_platforms = build_rect_from_csv('Map/level1_oneway.csv')
 
+all_platforms = solid_platforms + one_way_platforms
 
-enemies = [Enemy(600,HEIGHT - 90*4), Enemy(500,HEIGHT - 90*4)]
+solid_grid = load_csv_map('Map/level1_solid.csv')
+one_way_grid = load_csv_map('Map/level1_oneway.csv')
+decor_back_grid = load_csv_map('Map/level1_decorback.csv')
+decor_front_grid = load_csv_map('Map/level1_decorfront.csv')
+
+tile_cache = build_tile_cache('Map/Snow platform tileset.png')
 
 def start_game():
-    global player, enemies, game_state
-    player = Player(100, 100)
-    enemies = [Enemy(600, HEIGHT - 90*4), Enemy(500, HEIGHT - 90*4)]
+    global player, enemies, chests, game_state, camera_x, camera_y
+    player = Player(48,1152)
+    enemies = [Enemy(1168, 1280), Enemy(1776, 1216), Enemy(2512, 1216), Enemy(3272, 1216), Enemy(4056, 640), Enemy(7048, 448)]
+    chests = [Chest(4128, 576), Chest(1304, 1280)]
+    camera_x = 0
+    camera_y = 0
     game_state = 'playing'
 
 def draw_game_scene(screen):
-    screen.fill('#1c1c2e')
-    for platform in platforms:
-        pygame.draw.rect(screen, WHITE, platform)
-    player.draw(screen)
+    world_surface.fill('#1c1c2e')
+    draw_tile_layer(world_surface, solid_grid, tile_cache)
+    draw_tile_layer(world_surface, one_way_grid, tile_cache)
+    draw_tile_layer(world_surface, decor_back_grid, tile_cache)
+    draw_tile_layer(world_surface, decor_front_grid, tile_cache)
+    player.draw(world_surface)
     for enemy in enemies:
-        enemy.draw(screen)
+        enemy.draw(world_surface)
+    for chest in chests:
+        chest.draw(world_surface, player)
+    screen.blit(world_surface,(-int(camera_x), -int(camera_y)))
+
+def get_camera_offset(player, level_width, level_height, screen_width, screen_height):
+    #Tính camera theo player và giữ camera trong biên level.
+    camera_x = player.hitbox.centerx - screen_width // 2
+    camera_y = player.hitbox.centery - screen_height // 2
+
+    max_camera_x = max(0, level_width - screen_width)
+    max_camera_y = max(0, level_height - screen_height)
+
+    camera_x = max(0, min(camera_x, max_camera_x))
+    camera_y = max(0, min(camera_y, max_camera_y))
+
+    return camera_x, camera_y
 
 while running:
     #Xứ lý ấn nút 
@@ -75,6 +111,10 @@ while running:
                     game_state = 'menu'
                 if event.key == pygame.K_j:
                     player.dash()
+                if event.key == pygame.K_e:
+                    for chest in chests:
+                        if chest.can_interact(player):
+                            chest.open(player)
                 if event.key == pygame.K_p:
                     game_state = 'paused'
 
@@ -101,7 +141,7 @@ while running:
     elif game_state == 'playing':
         
         # Player
-        player.update(platforms, WIDTH)
+        player.update(solid_platforms, all_platforms, LEVEL_WIDTH, LEVEL_HEIGHT)
         if not player.alive:
             for enemy in enemies:
                 enemy.state = 'patrol'
@@ -112,11 +152,17 @@ while running:
 
         # Enemies
         for enemy in enemies[:]:   
-            enemy.update(platforms, player)
+            enemy.update(solid_platforms, all_platforms, player)
             
             if not enemy.alive and enemy.status == 'death' and enemy.frame_index >= len(enemy.animations.get('death', [])) - 2:
                 if enemy in enemies:
                     enemies.remove(enemy)
+
+        # Camera 
+        target_x, target_y = get_camera_offset(player, LEVEL_WIDTH, LEVEL_HEIGHT, WIDTH, HEIGHT)
+
+        camera_x += (target_x - camera_x) * 0.12
+        camera_y += (target_y - camera_y) * 0.12
 
         # Kiểm tra va chạm đòn tấn công
         if player.alive:
@@ -148,10 +194,9 @@ while running:
     #Draw (Render)
     if game_state == 'menu':
         main_menu.draw(screen)
-
     elif game_state == 'playing':
         draw_game_scene(screen)
-
+        ui.draw_health_bar(screen, player.health, player.max_health)
     elif game_state == 'paused':
         draw_game_scene(screen)
         pause_menu.draw(screen)
