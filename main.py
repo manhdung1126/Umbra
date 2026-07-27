@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from player import Player
 from enemy import Enemy
 from ui import UI
+from map_background import Background
 from main_menu import MainMenu, PauseMenu, GameOverMenu
 from game_states import MenuState, PlayingState, PausedState, GameOverState
 from tilemap import build_solid_rect_from_csv, get_map_size, load_csv_map, build_tile_cache, draw_tile_layer
@@ -20,7 +21,7 @@ WHITE = (255, 255, 255)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Umbra')
 
-world_surface = pygame.Surface((LEVEL_WIDTH, LEVEL_HEIGHT))
+world_surface = pygame.Surface((LEVEL_WIDTH, LEVEL_HEIGHT), pygame.SRCALPHA)
 clock = pygame.time.Clock()
 
 solid_platforms = build_solid_rect_from_csv('Map/level1_solid.csv')
@@ -51,6 +52,7 @@ game = SimpleNamespace(
     pause_menu = PauseMenu(WIDTH, HEIGHT),
     game_over_menu = GameOverMenu(WIDTH, HEIGHT),
     ui = UI(WIDTH, HEIGHT),
+    background = Background(WIDTH, HEIGHT),
 
     player = None,
     enemies = [],
@@ -97,13 +99,15 @@ def get_camera_offset(player, level_width, level_height, screen_width, screen_he
 
 
 def draw_game_scene(screen):
-    game.world_surface.fill('#1c1c2e')
+    game.background.draw(screen)
+    game.world_surface.fill((0, 0, 0, 0))
     draw_tile_layer(game.world_surface, game.solid_grid, game.tile_cache)
     draw_tile_layer(game.world_surface, game.one_way_grid, game.tile_cache)
     game.player.draw(game.world_surface)
     for enemy in game.enemies:
         enemy.draw(game.world_surface)
     screen.blit(game.world_surface, (-int(game.camera_x), -int(game.camera_y)))
+    game.ui.draw_health_bar(screen, game.player.health, game.player.max_health)
 
 
 game.change_state = change_state
