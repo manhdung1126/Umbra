@@ -2,6 +2,7 @@ import pygame
 import sys
 from player import Player
 from enemy import Enemy
+from boss import Boss
 from ui import UI
 from chest import Chest
 from main_menu import MainMenu, PauseMenu, GameOverMenu
@@ -52,9 +53,10 @@ decor_front_grid = load_csv_map('Map/level1_decorfront.csv')
 tile_cache = build_tile_cache('Map/Snow platform tileset.png')
 
 def start_game():
-    global player, enemies, chests, game_state, camera_x, camera_y
+    global player, boss, enemies, chests, game_state, camera_x, camera_y
     player = Player(48,1152)
-    enemies = [Enemy(1168, 1280), Enemy(1776, 1216), Enemy(2512, 1216), Enemy(3272, 1216), Enemy(4056, 640), Enemy(7048, 448)]
+    boss = Boss(7048, 448)
+    enemies = [Enemy(1168, 1280), Enemy(1776, 1216), Enemy(2512, 1216), Enemy(3272, 1216), Enemy(4056, 640),]
     chests = [Chest(4128, 576), Chest(1304, 1280)]
     camera_x = 0
     camera_y = 0
@@ -66,11 +68,12 @@ def draw_game_scene(screen):
     draw_tile_layer(world_surface, one_way_grid, tile_cache)
     draw_tile_layer(world_surface, decor_back_grid, tile_cache)
     draw_tile_layer(world_surface, decor_front_grid, tile_cache)
-    player.draw(world_surface)
-    for enemy in enemies:
-        enemy.draw(world_surface)
     for chest in chests:
         chest.draw(world_surface, player)
+    player.draw(world_surface)
+    boss.draw(world_surface)
+    for enemy in enemies:
+        enemy.draw(world_surface)
     screen.blit(world_surface,(-int(camera_x), -int(camera_y)))
 
 def get_camera_offset(player, level_width, level_height, screen_width, screen_height):
@@ -139,17 +142,25 @@ while running:
     if game_state == 'menu':
         main_menu.update()
     elif game_state == 'playing':
+
+        # Item
+        for chest in chests[:]:
+            chest.update()
         
         # Player
         player.update(solid_platforms, all_platforms, LEVEL_WIDTH, LEVEL_HEIGHT)
         if not player.alive:
+            boss.state = 'idle'
+            boss.attacking = False
+            boss.casting = False
             for enemy in enemies:
                 enemy.state = 'patrol'
                 enemy.attacking = False
             if player.frame_index >= len(player.animations['death']) - 1:
                 game_state = 'game_over'
 
-
+        # Boss
+        boss.update(solid_platforms, all_platforms, player)
         # Enemies
         for enemy in enemies[:]:   
             enemy.update(solid_platforms, all_platforms, player)
@@ -175,6 +186,12 @@ while running:
                         enemy.take_damage(10)
                         player.enemies_hit_attack.add(enemy)
 
+                    if (boss.alive and 
+                            attack_hitbox.colliderect(boss.hitbox) and 
+                            boss not in player.enemies_hit_attack):
+                            boss.take_damage(20)
+                            player.enemies_hit_attack.add(boss)
+
         for enemy in enemies:
             if enemy.alive:
                 enemy_attack_hitbox = enemy.get_attack_hitbox()
@@ -182,9 +199,22 @@ while running:
                     if enemy_attack_hitbox.colliderect(player.hitbox):
                         player.take_damage(enemy.attack_damage)
                         enemy.player_already_hit = True
+
+        if boss.alive:
+            boss_melee_hitbox = boss.get_attack_hitbox()
+            if boss_melee_hitbox and not boss.player_already_hit:
+                if boss_melee_hitbox.colliderect(player.hitbox):
+                    player.take_damage(boss.melee_damage)
+                    boss.player_already_hit = True
+
+            for spell in boss.spells:
+                spell_hitbox = spell.get_hitbox()
+                if spell_hitbox and not spell.player_already_hit:
+                    if spell_hitbox.colliderect(player.hitbox):
+                        player.take_damage(spell.damage)
+                        spell.player_already_hit = True
         
-        # Xóa enemy chết
-        # enemies[:] = [e for e in enemies if e.alive]
+        
     elif game_state == 'paused':
         pause_menu.update()
 
