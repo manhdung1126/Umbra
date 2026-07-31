@@ -29,7 +29,7 @@ class Player:
             midbottom=(self.hitbox.centerx, self.hitbox.bottom + self.foot_padding)
         )
 
-        self.max_health = 100
+        self.max_health = 300
         self.health = self.max_health
         self.alive = True
         self.invulnerable = False
