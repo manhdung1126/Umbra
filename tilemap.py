@@ -19,7 +19,7 @@ def load_csv_map(path):
 
     return grid
 
-def build_solid_rect_from_csv(path):
+def build_rect_from_csv(path):
     rects = []
     grid = load_csv_map(path)
 

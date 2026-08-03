@@ -29,7 +29,7 @@ class Player:
             midbottom=(self.hitbox.centerx, self.hitbox.bottom + self.foot_padding)
         )
 
-        self.max_health = 100
+        self.max_health = 300
         self.health = self.max_health
         self.alive = True
         self.invulnerable = False
@@ -119,6 +119,13 @@ class Player:
                 self.hitbox.bottom = platform.top
                 self.velocity_y = 0
                 self.on_ground = True
+
+    def check_fall_out(self, height):
+        if self.hitbox.top > height:
+            self.health = 0
+            self.alive = False
+            self.status = 'death'
+            self.frame_index = len(self.animations['death']) - 1
 
     def get_input(self): #Xử lý giữ phím
         keys = pygame.key.get_pressed()
@@ -291,7 +298,7 @@ class Player:
             midbottom=(self.hitbox.centerx, self.hitbox.bottom + self.foot_padding)
         )
 
-    def update(self, solid_platforms, all_platforms, level_width):
+    def update(self, solid_platforms, all_platforms, level_width, level_height):
         if not self.alive:
             self.apply_gravity()
             self.check_vertical_collisions(all_platforms)
@@ -315,6 +322,7 @@ class Player:
             self.on_ground = False
             self.check_solid_y_collisions(solid_platforms)
             self.check_vertical_collisions(all_platforms)
+            self.check_fall_out(level_height)
 
         self.get_status()
         self.animate()

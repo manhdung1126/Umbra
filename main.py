@@ -3,11 +3,13 @@ import sys
 from types import SimpleNamespace
 from player import Player
 from enemy import Enemy
+from boss import Boss
+from chest import Chest
 from ui import UI
 from map_background import Background
 from main_menu import MainMenu, PauseMenu, GameOverMenu
 from game_states import MenuState, PlayingState, PausedState, GameOverState
-from tilemap import build_solid_rect_from_csv, get_map_size, load_csv_map, build_tile_cache, draw_tile_layer
+from tilemap import build_rect_from_csv, get_map_size, load_csv_map, build_tile_cache, draw_tile_layer
 
 pygame.init()
 
@@ -24,48 +26,55 @@ pygame.display.set_caption('Umbra')
 world_surface = pygame.Surface((LEVEL_WIDTH, LEVEL_HEIGHT), pygame.SRCALPHA)
 clock = pygame.time.Clock()
 
-solid_platforms = build_solid_rect_from_csv('Map/level1_solid.csv')
-one_way_platforms = build_solid_rect_from_csv('Map/level1_oneway.csv')
+solid_platforms = build_rect_from_csv('Map/level1_solid.csv')
+one_way_platforms = build_rect_from_csv('Map/level1_oneway.csv')
+
 all_platforms = solid_platforms + one_way_platforms
 
 solid_grid = load_csv_map('Map/level1_solid.csv')
 one_way_grid = load_csv_map('Map/level1_oneway.csv')
+decor_back_grid = load_csv_map('Map/level1_decorback.csv')
+decor_front_grid = load_csv_map('Map/level1_decorfront.csv')
 
 tile_cache = build_tile_cache('Map/Snow platform tileset.png')
 
 game = SimpleNamespace(
-    WIDTH = WIDTH,
-    HEIGHT = HEIGHT,
-    LEVEL_WIDTH = LEVEL_WIDTH,
-    LEVEL_HEIGHT = LEVEL_HEIGHT,
-    FPS = FPS,
+    WIDTH=WIDTH,
+    HEIGHT=HEIGHT,
+    LEVEL_WIDTH=LEVEL_WIDTH,
+    LEVEL_HEIGHT=LEVEL_HEIGHT,
+    FPS=FPS,
 
-    BLACK = BLACK,
-    WHITE = WHITE,
+    BLACK=BLACK,
+    WHITE=WHITE,
 
-    screen = screen,
-    world_surface = world_surface,
-    clock = clock,
-    running = True,
+    screen=screen,
+    world_surface=world_surface,
+    clock=clock,
+    running=True,
 
-    main_menu = MainMenu(WIDTH, HEIGHT),
-    pause_menu = PauseMenu(WIDTH, HEIGHT),
-    game_over_menu = GameOverMenu(WIDTH, HEIGHT),
-    ui = UI(WIDTH, HEIGHT),
-    background = Background(WIDTH, HEIGHT),
+    main_menu=MainMenu(WIDTH, HEIGHT),
+    pause_menu=PauseMenu(WIDTH, HEIGHT),
+    game_over_menu=GameOverMenu(WIDTH, HEIGHT),
+    ui=UI(WIDTH, HEIGHT),
+    background=Background(WIDTH, HEIGHT),
 
-    player = None,
-    enemies = [],
-    camera_x = 0,
-    camera_y = 0,
+    player=None,
+    enemies=[],
+    boss=None,
+    chests=[],
+    camera_x=0,
+    camera_y=0,
 
-    solid_platforms = solid_platforms,
-    one_way_platforms = one_way_platforms,
-    all_platforms = all_platforms,
+    solid_platforms=solid_platforms,
+    one_way_platforms=one_way_platforms,
+    all_platforms=all_platforms,
 
-    solid_grid = solid_grid,
-    one_way_grid = one_way_grid,
-    tile_cache = tile_cache,
+    solid_grid=solid_grid,
+    one_way_grid=one_way_grid,
+    decor_back_grid=decor_back_grid,
+    decor_front_grid=decor_front_grid,
+    tile_cache=tile_cache,
 )
 
 
@@ -77,8 +86,10 @@ def start_game():
     game.player = Player(48, 1152)
     game.enemies = [
         Enemy(1168, 1280), Enemy(1776, 1216), Enemy(2512, 1216),
-        Enemy(3272, 1216), Enemy(4056, 640), Enemy(7048, 448),
+        Enemy(3272, 1216), Enemy(4056, 640),
     ]
+    game.boss = Boss(7048, 448)
+    game.chests = [Chest(4128, 576), Chest(1304, 1280)]
     game.camera_x = 0
     game.camera_y = 0
     change_state('playing')
@@ -103,7 +114,13 @@ def draw_game_scene(screen):
     game.world_surface.fill((0, 0, 0, 0))
     draw_tile_layer(game.world_surface, game.solid_grid, game.tile_cache)
     draw_tile_layer(game.world_surface, game.one_way_grid, game.tile_cache)
+    draw_tile_layer(game.world_surface, game.decor_back_grid, game.tile_cache)
+    draw_tile_layer(game.world_surface, game.decor_front_grid, game.tile_cache)
+    for chest in game.chests:
+        chest.draw(game.world_surface, game.player)
     game.player.draw(game.world_surface)
+    if game.boss:
+        game.boss.draw(game.world_surface)
     for enemy in game.enemies:
         enemy.draw(game.world_surface)
     screen.blit(game.world_surface, (-int(game.camera_x), -int(game.camera_y)))
