@@ -76,7 +76,6 @@ class MenuBackgroundAnimation:
         return int(pulse * self.glow_strength * 255)
 
     def _draw_tile_layer(self, screen, tile, offset):
-        """Vẽ 1 layer chỉ có 1 ảnh, lặp lại liên tục theo trục x (cuộn phải -> trái)."""
         tile_w = tile.get_width()
         x = -(offset % tile_w)
         while x < self.width:

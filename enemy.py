@@ -292,11 +292,11 @@ class Enemy:
             debug_text = self.font.render(f"{self.state} | {self.status}", True, (255, 255, 255))
             # Căn giữa dòng chữ và đặt nó cao hơn thanh máu một chút (y - 15)
             text_rect = debug_text.get_rect(midbottom=(self.hitbox.centerx, self.hitbox.y - 15))
-            
+
             bg_rect = text_rect.copy()
             bg_rect.inflate_ip(4, 4)
             pygame.draw.rect(screen, (0, 0, 0), bg_rect)
-            
+
             # Vẽ chữ lên màn hình
             screen.blit(debug_text, text_rect)
 
