@@ -22,7 +22,7 @@ class Background:
         for path, speed_x in self.LAYER_DATA:
             self.layer.append(self._buid_layer(path, speed_x))
 
-        self.surface = pygame.Surface((width, height))
+        self.surface = pygame.Surface((width, height)).convert_alpha()
 
     def _load_backdrop_color(self, path):
         image = pygame.image.load(path).convert()

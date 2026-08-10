@@ -33,7 +33,8 @@ class Spell:
         self.image = self.animations[int(self.frame_index)]
         self.rect = self.image.get_rect(midbottom=(self.x, self.ground_y))
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
+    def draw(self, screen, cam_x, cam_y):
+        draw_rect = self.rect.move(-cam_x, -cam_y)
+        screen.blit(self.image, draw_rect)
 
     

@@ -70,16 +70,21 @@ def build_tile_cache(tileset_path):
     return cache
 
 
-def draw_tile_layer(surface, grid, tile_cache):
+def draw_tile_layer(surface, grid, tile_cache, cam_x, cam_y):
+    screen_w = surface.get_width()
+    screen_h = surface.get_height()
+
     for row_index, row in enumerate(grid):
         for col_index, tile_id in enumerate(row):
             if tile_id in EMPTY_TILE:
                 continue
 
-            surface.blit(
-                tile_cache[tile_id],
-                (
-                    col_index * WORLD_TILE_SIZE,
-                    row_index * WORLD_TILE_SIZE,
-                ),
-            )
+            # Tính toán tọa độ vẽ trực tiếp trên màn hình sau khi áp dụng Camera Offset
+            x = col_index * WORLD_TILE_SIZE - cam_x
+            y = row_index * WORLD_TILE_SIZE - cam_y
+
+            if -WORLD_TILE_SIZE <= x <= screen_w and -WORLD_TILE_SIZE <= y <= screen_h:
+                surface.blit(
+                    tile_cache[tile_id],
+                    (x, y),
+                )

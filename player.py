@@ -329,14 +329,18 @@ class Player:
         self.update_invulnerable()
         print(f"Pos x: {self.hitbox.left}, y: {self.hitbox.bottom}")
 
-    def draw(self, screen):
+    def draw(self, screen, cam_x, cam_y):
         if self.alive and self.invulnerable and pygame.time.get_ticks() % 200 < 100:
             return
-        screen.blit(self.image, self.rect)
+        
+        draw_rect = self.rect.move(-cam_x, -cam_y)
+        screen.blit(self.image, draw_rect)
+        
         if self.alive:
-            #Vẽ hitbox
-            pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 2)
-            #vẽ attack_hitbox
+            draw_hitbox = self.hitbox.move(-cam_x, -cam_y)
+            pygame.draw.rect(screen, (255, 0, 0), draw_hitbox, 2)
+     
             attack_hitbox = self.get_attack_hitbox()
             if attack_hitbox:
-                pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 2)
+                draw_attack_hitbox = attack_hitbox.move(-cam_x, -cam_y)
+                pygame.draw.rect(screen, (255, 255, 0), draw_attack_hitbox, 2)

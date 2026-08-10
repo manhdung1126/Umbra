@@ -23,7 +23,6 @@ WHITE = (255, 255, 255)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Umbra')
 
-world_surface = pygame.Surface((LEVEL_WIDTH, LEVEL_HEIGHT), pygame.SRCALPHA)
 clock = pygame.time.Clock()
 
 solid_platforms = build_rect_from_csv('Map/level1_solid.csv')
@@ -49,7 +48,6 @@ game = SimpleNamespace(
     WHITE=WHITE,
 
     screen=screen,
-    world_surface=world_surface,
     clock=clock,
     running=True,
 
@@ -111,19 +109,19 @@ def get_camera_offset(player, level_width, level_height, screen_width, screen_he
 
 def draw_game_scene(screen):
     game.background.draw(screen)
-    game.world_surface.fill((0, 0, 0, 0))
-    draw_tile_layer(game.world_surface, game.solid_grid, game.tile_cache)
-    draw_tile_layer(game.world_surface, game.one_way_grid, game.tile_cache)
-    draw_tile_layer(game.world_surface, game.decor_back_grid, game.tile_cache)
-    draw_tile_layer(game.world_surface, game.decor_front_grid, game.tile_cache)
+    cam_x = int(game.camera_x)
+    cam_y = int(game.camera_y)
+    draw_tile_layer(screen, game.solid_grid, game.tile_cache, cam_x, cam_y)
+    draw_tile_layer(screen, game.one_way_grid, game.tile_cache, cam_x, cam_y)
+    draw_tile_layer(screen, game.decor_back_grid, game.tile_cache, cam_x, cam_y)
+    draw_tile_layer(screen, game.decor_front_grid, game.tile_cache, cam_x, cam_y)
     for chest in game.chests:
-        chest.draw(game.world_surface, game.player)
-    game.player.draw(game.world_surface)
+        chest.draw(screen, cam_x, cam_y, game.player) 
+    game.player.draw(screen, cam_x, cam_y)
     if game.boss:
-        game.boss.draw(game.world_surface)
+        game.boss.draw(screen, cam_x, cam_y)
     for enemy in game.enemies:
-        enemy.draw(game.world_surface)
-    screen.blit(game.world_surface, (-int(game.camera_x), -int(game.camera_y)))
+        enemy.draw(screen, cam_x, cam_y)
     game.ui.draw_health_bar(screen, game.player.health, game.player.max_health)
 
 
