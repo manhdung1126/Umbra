@@ -270,9 +270,9 @@ class Boss(Enemy):
         self.get_status()
         self.animate()
 
-    def draw(self, screen):
+    def draw(self, screen, cam_x, cam_y):
         for spell in self.spells:
-            spell.draw(screen)
-        super().draw(screen)
+            spell.draw(screen, cam_x, cam_y)
+        super().draw(screen, cam_x, cam_y)
         
             

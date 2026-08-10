@@ -275,36 +275,30 @@ class Enemy:
         self.get_status(player, all_platforms)
         self.animate()
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
+    def draw(self, screen, cam_x, cam_y):
+        draw_rect = self.rect.move(-cam_x, -cam_y)
+        screen.blit(self.image, draw_rect)
+        
         if self.alive:
-            pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 2) 
+            draw_hitbox = self.hitbox.move(-cam_x, -cam_y)
+            pygame.draw.rect(screen, (255, 0, 0), draw_hitbox, 2) 
 
             # Attack Range (vòng tròn xanh nhạt)
-            pygame.draw.circle(screen, (0, 255, 100, 80), self.hitbox.center, self.attack_range, 2)
+            center_x = self.hitbox.centerx - cam_x
+            center_y = self.hitbox.centery - cam_y
+            pygame.draw.circle(screen, (0, 255, 100, 80), (center_x, center_y), self.attack_range, 2)
 
             # Attack Hitbox (nếu đang attack - màu vàng)
             attack_hitbox = self.get_attack_hitbox()
             if attack_hitbox:
-                pygame.draw.rect(screen, (255, 255, 0), attack_hitbox, 3)
+                draw_attack_hitbox = attack_hitbox.move(-cam_x, -cam_y)
+                pygame.draw.rect(screen, (255, 255, 0), draw_attack_hitbox, 3)
 
-            # Hiển thị cả State (Quyết định AI) và Status (Hoạt ảnh)
-            debug_text = self.font.render(f"{self.state} | {self.status}", True, (255, 255, 255))
-            # Căn giữa dòng chữ và đặt nó cao hơn thanh máu một chút (y - 15)
-            text_rect = debug_text.get_rect(midbottom=(self.hitbox.centerx, self.hitbox.y - 15))
-
-            bg_rect = text_rect.copy()
-            bg_rect.inflate_ip(4, 4)
-            pygame.draw.rect(screen, (0, 0, 0), bg_rect)
-
-            # Vẽ chữ lên màn hình
-            screen.blit(debug_text, text_rect)
-
-            #Thanh máu nhỏ phía trên đầu quái
+            # Thanh máu nhỏ phía trên đầu quái
             bar_width = self.hitbox.width
             bar_height = 6
-            bar_x = self.hitbox.x
-            bar_y = self.hitbox.y - bar_height - 4
+            bar_x = self.hitbox.x - cam_x
+            bar_y = self.hitbox.y - cam_y - bar_height - 4
 
             health_ratio = self.health / self.max_health
             pygame.draw.rect(screen, (60, 0, 0), (bar_x, bar_y, bar_width, bar_height))
