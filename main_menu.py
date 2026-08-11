@@ -79,24 +79,32 @@ class PauseMenu:
         self.height = height
 
         resume_box = (255, 45)
+        restart_box = (297, 45)
         quit_box = (171, 51)
 
         self.resume_button_img = load_scaled(
             'graphics/main_menu/Resume Button.png', resume_box
+        )
+        self.restart_button_img = load_scaled(
+            'graphics/main_menu/Restart Button.png', restart_box
         )
         self.quit_button_img = load_scaled(
             'graphics/main_menu/Quit Button.png', quit_box
         )
 
         self.resume_button_rect = self.resume_button_img.get_rect(
-            center=(width // 2, height // 2 - 70)
+            center=(width // 2, height // 2 - 100)
+        )
+        self.restart_button_rect = self.restart_button_img.get_rect(
+            center=(width // 2, height // 2 - 20)
         )
         self.quit_button_rect = self.quit_button_img.get_rect(
-            center=(width // 2, height // 2 + 10)
+            center=(width // 2, height // 2 + 60)
         )
 
         self.hover_scale = 1.1
         self.is_hovering_resume = False
+        self.is_hovering_restart = False
         self.is_hovering_quit = False
 
         self.overlay = pygame.Surface((width, height), pygame.SRCALPHA)
@@ -107,6 +115,8 @@ class PauseMenu:
             if event.button == 1:
                 if self.resume_button_rect.collidepoint(event.pos):
                     return 'resume'
+                if self.restart_button_rect.collidepoint(event.pos):
+                    return 'restart'
                 if self.quit_button_rect.collidepoint(event.pos):
                     return 'quit'
         return None
@@ -114,11 +124,13 @@ class PauseMenu:
     def update(self):
         mouse_pos = pygame.mouse.get_pos()
         self.is_hovering_resume = self.resume_button_rect.collidepoint(mouse_pos)
+        self.is_hovering_restart = self.restart_button_rect.collidepoint(mouse_pos)
         self.is_hovering_quit = self.quit_button_rect.collidepoint(mouse_pos)
 
     def draw(self, screen):
         screen.blit(self.overlay, (0, 0))
         draw_button(screen, self.resume_button_img, self.resume_button_rect, self.is_hovering_resume, self.hover_scale)
+        draw_button(screen, self.restart_button_img, self.restart_button_rect, self.is_hovering_restart, self.hover_scale)
         draw_button(screen, self.quit_button_img, self.quit_button_rect, self.is_hovering_quit, self.hover_scale)
 
 class GameOverMenu:
@@ -167,4 +179,61 @@ class GameOverMenu:
     def draw(self, screen):
         screen.blit(self.overlay, (0, 0))
         draw_button(screen, self.restart_button_img, self.restart_button_rect, self.is_hovering_restart, self.hover_scale)
+        draw_button(screen, self.quit_button_img, self.quit_button_rect, self.is_hovering_quit, self.hover_scale)
+
+
+class VictoryMenu:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+        victory_box = (int(width * 0.6), int(height * 0.35))
+        play_again_box = (393, 45)
+        quit_box = (171, 51)
+
+        self.victory_img = load_scaled(
+            'graphics/main_menu/Victory.png', victory_box
+        )
+        self.play_again_button_img = load_scaled(
+            'graphics/main_menu/Play Again Button.png', play_again_box
+        )
+        self.quit_button_img = load_scaled(
+            'graphics/main_menu/Quit Button.png', quit_box
+        )
+
+        self.victory_rect = self.victory_img.get_rect(
+            center=(width // 2, height // 2 - 90)
+        )
+        self.play_again_button_rect = self.play_again_button_img.get_rect(
+            center=(width // 2, height // 2 + 90)
+        )
+        self.quit_button_rect = self.quit_button_img.get_rect(
+            center=(width // 2, height // 2 + 170)
+        )
+
+        self.hover_scale = 1.1
+        self.is_hovering_play_again = False
+        self.is_hovering_quit = False
+
+        self.overlay = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.overlay.fill((0, 0, 0, 150))
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                if self.play_again_button_rect.collidepoint(event.pos):
+                    return 'play_again'
+                if self.quit_button_rect.collidepoint(event.pos):
+                    return 'quit'
+        return None
+
+    def update(self):
+        mouse_pos = pygame.mouse.get_pos()
+        self.is_hovering_play_again = self.play_again_button_rect.collidepoint(mouse_pos)
+        self.is_hovering_quit = self.quit_button_rect.collidepoint(mouse_pos)
+
+    def draw(self, screen):
+        screen.blit(self.overlay, (0, 0))
+        screen.blit(self.victory_img, self.victory_rect)
+        draw_button(screen, self.play_again_button_img, self.play_again_button_rect, self.is_hovering_play_again, self.hover_scale)
         draw_button(screen, self.quit_button_img, self.quit_button_rect, self.is_hovering_quit, self.hover_scale)
