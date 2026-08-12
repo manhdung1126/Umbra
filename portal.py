@@ -43,10 +43,16 @@ class Portal:
     def update(self):
         self.animate()
 
-    def draw(self, screen, player):
-        screen.blit(self.image, self.rect)
+    def draw(self, screen, cam_x, cam_y, player):
+        draw_rect = self.rect.move(-cam_x, -cam_y)
+        screen.blit(self.image, draw_rect)
+        
         if self.can_interact(player):
             font = pygame.font.SysFont('arial', 20)
             hint = font.render('Nhấn E để sang màn tiếp theo', True, (255, 255, 255))
-            hint_rect = hint.get_rect(midbottom=(self.hitbox.centerx, self.hitbox.top - 8))
+            
+            center_x = self.hitbox.centerx - cam_x
+            top_y = self.hitbox.top - cam_y - 8
+            
+            hint_rect = hint.get_rect(midbottom=(center_x, top_y))
             screen.blit(hint, hint_rect)

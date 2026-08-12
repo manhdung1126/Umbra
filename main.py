@@ -157,7 +157,13 @@ def start_game():
     spawn_x, spawn_y = LEVELS[1]['player_spawn']
     game.player = Player(spawn_x, spawn_y)
     populate_entities(1)
-
+    
+    game.enemies = [
+        Enemy(1168, 1280), Enemy(1776, 1216), Enemy(2512, 1216),
+        Enemy(3272, 1216), Enemy(4056, 640),
+    ]
+    game.boss = Boss(7048, 448)
+    game.chests = [Chest(4128, 576), Chest(1304, 1280)]
     game.camera_x = 0
     game.camera_y = 0
     change_state('playing')
@@ -211,21 +217,21 @@ def get_camera_offset(player, level_width, level_height, screen_width, screen_he
 
 def draw_game_scene(screen):
     game.background.draw(screen)
-    game.world_surface.fill((0, 0, 0, 0))
-    draw_tile_layer(game.world_surface, game.solid_grid, game.tile_cache)
-    draw_tile_layer(game.world_surface, game.one_way_grid, game.tile_cache)
-    draw_tile_layer(game.world_surface, game.decor_back_grid, game.tile_cache)
-    draw_tile_layer(game.world_surface, game.decor_front_grid, game.tile_cache)
+    cam_x = int(game.camera_x)
+    cam_y = int(game.camera_y)
+    draw_tile_layer(screen, game.solid_grid, game.tile_cache, cam_x, cam_y)
+    draw_tile_layer(screen, game.one_way_grid, game.tile_cache, cam_x, cam_y)
+    draw_tile_layer(screen, game.decor_back_grid, game.tile_cache, cam_x, cam_y)
+    draw_tile_layer(screen, game.decor_front_grid, game.tile_cache, cam_x, cam_y)
     for chest in game.chests:
-        chest.draw(game.world_surface, game.player)
+        chest.draw(screen, cam_x, cam_y, game.player)
     if game.portal:
-        game.portal.draw(game.world_surface, game.player)
-    game.player.draw(game.world_surface)
+        game.portal.draw(screen, cam_x, cam_y, game.player)
+    game.player.draw(screen, cam_x, cam_y)
     if game.boss:
-        game.boss.draw(game.world_surface)
+        game.boss.draw(screen, cam_x, cam_y)
     for enemy in game.enemies:
-        enemy.draw(game.world_surface)
-    screen.blit(game.world_surface, (-int(game.camera_x), -int(game.camera_y)))
+        enemy.draw(screen, cam_x, cam_y)
     game.ui.draw_health_bar(screen, game.player.health, game.player.max_health)
 
 
