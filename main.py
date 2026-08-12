@@ -157,13 +157,7 @@ def start_game():
     spawn_x, spawn_y = LEVELS[1]['player_spawn']
     game.player = Player(spawn_x, spawn_y)
     populate_entities(1)
-    
-    game.enemies = [
-        Enemy(1168, 1280), Enemy(1776, 1216), Enemy(2512, 1216),
-        Enemy(3272, 1216), Enemy(4056, 640),
-    ]
-    game.boss = Boss(7048, 448)
-    game.chests = [Chest(4128, 576), Chest(1304, 1280)]
+
     game.camera_x = 0
     game.camera_y = 0
     change_state('playing')
@@ -224,9 +218,9 @@ def draw_game_scene(screen):
     draw_tile_layer(screen, game.decor_back_grid, game.tile_cache, cam_x, cam_y)
     draw_tile_layer(screen, game.decor_front_grid, game.tile_cache, cam_x, cam_y)
     for chest in game.chests:
-        chest.draw(screen, cam_x, cam_y, game.player)
+        chest.draw(screen, cam_x, cam_y, game.player) 
     if game.portal:
-        game.portal.draw(screen, cam_x, cam_y, game.player)
+            game.portal.draw(screen, cam_x, cam_y, game.player)
     game.player.draw(screen, cam_x, cam_y)
     if game.boss:
         game.boss.draw(screen, cam_x, cam_y)
