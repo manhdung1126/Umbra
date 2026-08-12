@@ -3,11 +3,11 @@ from support import import_sprite_sheet
 
 ATTACK_HIT_WINDOWS = {
     'attack1': [
-        [3],        
+        [4,5,6],        
     ],
     'attack2': [
-        [3],          
-        [10],
+        [4,5],          
+        [10,11,12],
     ],
 }
 
@@ -29,7 +29,7 @@ class Player:
             midbottom=(self.hitbox.centerx, self.hitbox.bottom + self.foot_padding)
         )
 
-        self.max_health = 300
+        self.max_health = 3000
         self.health = self.max_health
         self.alive = True
         self.invulnerable = False
@@ -59,7 +59,7 @@ class Player:
         self.dash_cooldown = 800
         self.dash_speed = 18
         self.dash_direction = 1
-        self.animation_speed_dash = 0.2
+        self.animation_speed_dash = 0.615
     
     def import_assets(self):
         FRAME_SIZE = 144

@@ -1,0 +1,1 @@
+game.player = Player(48, 1152)

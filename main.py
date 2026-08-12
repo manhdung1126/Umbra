@@ -82,6 +82,7 @@ def change_state(state_name):
 
 def start_game():
     game.player = Player(48, 1152)
+    
     game.enemies = [
         Enemy(1168, 1280), Enemy(1776, 1216), Enemy(2512, 1216),
         Enemy(3272, 1216), Enemy(4056, 640),
