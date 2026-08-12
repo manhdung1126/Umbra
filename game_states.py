@@ -1,4 +1,5 @@
 import pygame
+from portal import Portal
 
 
 class State:
@@ -46,6 +47,11 @@ class PlayingState(State):
                 for chest in self.game.chests:
                     if chest.can_interact(player):
                         chest.open(player)
+
+                portal = self.game.portal
+                if portal and portal.can_interact(player):
+                    self.game.advance_to_next_level()
+                    return
             if event.key == pygame.K_ESCAPE:
                 self.game.change_state('paused')
 
@@ -84,6 +90,16 @@ class PlayingState(State):
         # Boss
         if boss:
             boss.update(game.solid_platforms, game.all_platforms, player)
+
+            # Boss vừa chết -> mở cổng dịch chuyển cạnh vị trí spawn của boss
+            if not boss.alive and not game.portal and game.boss_spawn_pos:
+                spawn_x, spawn_y = game.boss_spawn_pos
+                offset_x, offset_y = getattr(game, 'portal_offset', (300, 0))
+                game.portal = Portal(spawn_x + offset_x, spawn_y + offset_y)
+
+        # Portal
+        if game.portal:
+            game.portal.update()
 
         # Camera
         target_camera_x = player.hitbox.x - game.WIDTH * 0.45
@@ -148,6 +164,8 @@ class PausedState(State):
         action = self.game.pause_menu.handle_event(event)
         if action == 'resume':
             self.game.change_state('playing')
+        elif action == 'restart':
+            self.game.restart_current_level()
         elif action == 'quit':
             self.game.change_state('menu')
 
@@ -163,7 +181,7 @@ class GameOverState(State):
     def handle_event(self, event):
         action = self.game.game_over_menu.handle_event(event)
         if action == 'restart':
-            self.game.start_game()
+            self.game.restart_current_level()
         elif action == 'quit':
             self.game.change_state('menu')
 
@@ -173,3 +191,19 @@ class GameOverState(State):
     def draw(self, screen):
         self.game.draw_game_scene(screen)
         self.game.game_over_menu.draw(screen)
+
+
+class VictoryState(State):
+    def handle_event(self, event):
+        action = self.game.victory_menu.handle_event(event)
+        if action == 'play_again':
+            self.game.start_game()
+        elif action == 'quit':
+            self.game.change_state('menu')
+
+    def update(self):
+        self.game.victory_menu.update()
+
+    def draw(self, screen):
+        self.game.draw_game_scene(screen)
+        self.game.victory_menu.draw(screen)

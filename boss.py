@@ -11,7 +11,7 @@ class Boss(Enemy):
         self.sprite_offset_x = -145
         self.rect = self.image.get_rect(midbottom=self.hitbox.midbottom)
 
-        self.max_health = 500
+        self.max_health = 5
         self.health = self.max_health
         self.attacking = False
         self.melee_damage = 100
