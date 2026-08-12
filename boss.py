@@ -11,7 +11,7 @@ class Boss(Enemy):
         self.sprite_offset_x = -145
         self.rect = self.image.get_rect(midbottom=self.hitbox.midbottom)
 
-        self.max_health = 1000
+        self.max_health = 500
         self.health = self.max_health
         self.attacking = False
         self.melee_damage = 100
@@ -21,19 +21,24 @@ class Boss(Enemy):
         self.melee_cooldown = 1800
         self.animation_speed_melee = 0.2
 
+        self.max_poise = 200
+        self.poise = self.max_poise
+        self.poise_recovery_time = 0 
+        self.poise_cooldown = 3000
+
         self.casting = False
         self.spells = []
         self.spell_damage = 50
         self.cast_cooldown = 2500
         self.cast_time = 0
-        self.cast_spawn_frame = 5
+        self.cast_spawn_frame = 6
         self.spell_spawn = False
         self.spell_target_x = 0
         self.spell_ground_y = 0
         self.spell_width = 140
         self.spell_height = 240
-        self.spell_hit_frames = [6,7,8,9]
-        self.animation_speed_cast = 0.12
+        self.spell_hit_frames = [7,8,9,10,11]
+        self.animation_speed_cast = 0.15
 
         self.status = 'idle'
         self.state = 'idle'
@@ -70,9 +75,29 @@ class Boss(Enemy):
     def patrol(self):
         pass
 
-    def take_damage(self, amount):
-        super().take_damage(amount)
-        self.casting = False
+    def take_damage(self, amount, poise_damage=35):
+        self.health -= amount
+        
+        # Xử lý cái chết
+        if self.health <= 0:
+            self.health = 0
+            self.alive = False
+            self.status = 'death'
+            self.casting = False
+            self.attacking = False
+            return # Dừng logic nếu đã chết
+
+        self.poise -= poise_damage
+        self.poise_recovery_time = pygame.time.get_ticks()
+        
+        # Kiểm tra xem đã "vỡ" sức chịu đựng chưa
+        if self.poise <= 0:
+            self.hurt = True
+            self.attacking = False
+            self.casting = False
+            self.frame_index = 0
+            self.state = 'idle'
+            self.poise = self.max_poise
 
     def start_melee(self):
         current_time = pygame.time.get_ticks()
@@ -149,19 +174,19 @@ class Boss(Enemy):
             return None
 
         current_frame = int(self.frame_index)
-        if current_frame not in [4,5,6]:
+        if current_frame not in [6, 7, 8, 9]:
             return None
 
-        attack_width = 250
+        attack_width = 300
         attack_height = 120
 
         if self.facing_right:
-            attack_hitbox = pygame.Rect(self.hitbox.right, 
+            attack_hitbox = pygame.Rect(self.hitbox.right - 80, 
                                         self.hitbox.centery,
                                         attack_width, attack_height
                                         )
         else :
-            attack_hitbox = pygame.Rect(self.hitbox.left - attack_width, 
+            attack_hitbox = pygame.Rect(self.hitbox.left - attack_width + 80, 
                                         self.hitbox.centery,
                                         attack_width, attack_height
                                         )
@@ -268,6 +293,10 @@ class Boss(Enemy):
         self.spawn_spell()
         self.update_spells()
         self.get_status()
+        if self.poise < self.max_poise and not self.hurt:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.poise_recovery_time > self.poise_cooldown:
+                self.poise = self.max_poise
         self.animate()
 
     def draw(self, screen, cam_x, cam_y):
