@@ -280,19 +280,19 @@ class Enemy:
         screen.blit(self.image, draw_rect)
         
         if self.alive:
-            draw_hitbox = self.hitbox.move(-cam_x, -cam_y)
-            pygame.draw.rect(screen, (255, 0, 0), draw_hitbox, 2) 
+            # draw_hitbox = self.hitbox.move(-cam_x, -cam_y)
+            # pygame.draw.rect(screen, (255, 0, 0), draw_hitbox, 2) 
 
-            # Attack Range (vòng tròn xanh nhạt)
-            center_x = self.hitbox.centerx - cam_x
-            center_y = self.hitbox.centery - cam_y
-            pygame.draw.circle(screen, (0, 255, 100, 80), (center_x, center_y), self.attack_range, 2)
+            # # Attack Range (vòng tròn xanh nhạt)
+            # center_x = self.hitbox.centerx - cam_x
+            # center_y = self.hitbox.centery - cam_y
+            # pygame.draw.circle(screen, (0, 255, 100, 80), (center_x, center_y), self.attack_range, 2)
 
-            # Attack Hitbox (nếu đang attack - màu vàng)
-            attack_hitbox = self.get_attack_hitbox()
-            if attack_hitbox:
-                draw_attack_hitbox = attack_hitbox.move(-cam_x, -cam_y)
-                pygame.draw.rect(screen, (255, 255, 0), draw_attack_hitbox, 3)
+            # # Attack Hitbox (nếu đang attack - màu vàng)
+            # attack_hitbox = self.get_attack_hitbox()
+            # if attack_hitbox:
+            #     draw_attack_hitbox = attack_hitbox.move(-cam_x, -cam_y)
+            #     pygame.draw.rect(screen, (255, 255, 0), draw_attack_hitbox, 3)
 
             # Thanh máu nhỏ phía trên đầu quái
             bar_width = self.hitbox.width

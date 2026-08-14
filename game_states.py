@@ -144,12 +144,13 @@ class PlayingState(State):
                     player.take_damage(boss.melee_damage)
                     boss.player_already_hit = True
 
-            for spell in boss.spells:
-                spell_hitbox = spell.get_hitbox()
-                if spell_hitbox and not spell.player_already_hit:
-                    if spell_hitbox.colliderect(player.hitbox):
-                        player.take_damage(spell.damage)
-                        spell.player_already_hit = True
+            if hasattr(boss, 'spells'):
+                for spell in boss.spells:
+                    spell_hitbox = spell.get_hitbox()
+                    if spell_hitbox and not spell.player_already_hit:
+                        if spell_hitbox.colliderect(player.hitbox):
+                            player.take_damage(spell.damage)
+                            spell.player_already_hit = True
 
     def draw(self, screen):
         self.game.draw_game_scene(screen)

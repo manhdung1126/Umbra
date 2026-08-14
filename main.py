@@ -3,7 +3,8 @@ import sys
 from types import SimpleNamespace
 from player import Player
 from enemy import Enemy
-from boss import Boss
+from boss_ice import IceBoss
+from boss_witch import WitchBoss
 from chest import Chest
 from portal import Portal
 from ui import UI
@@ -37,6 +38,7 @@ LEVELS = {
             (1168, 1280), (1776, 1216), (2512, 1216),
             (3272, 1216), (4056, 640),
         ],
+        'boss_class': IceBoss,
         'boss': (7048, 448),
         'portal_offset': (300, 0),
         'chests': [
@@ -55,6 +57,7 @@ LEVELS = {
             (1200, 1200), (2400, 1200), (2088, 192),
             (3408, 704), (4092, 1024)
         ],
+        'boss_class': WitchBoss,
         'boss': (6922, 1024),
         'chests': [
             (1786, 1280), (4480, 1216)
@@ -72,6 +75,7 @@ LEVELS = {
             (1760, 320), (2728, 832), (4080, 256),
             (4056, 1216), (6586, 640)
         ],
+        'boss_class': WitchBoss,
         'boss': (7456, 640),
         'chests': [
             (4738, 1088), (3072, 832)
@@ -135,9 +139,10 @@ def populate_entities(level_number):
     game.chests = [make_chest(chest_cfg) for chest_cfg in cfg.get('chests', [])]
 
     boss_pos = cfg.get('boss')
-    if boss_pos:
+    boss_class = cfg.get('boss_class')
+    if boss_pos and boss_class:
         game.boss_spawn_pos = boss_pos
-        game.boss = Boss(*boss_pos)
+        game.boss = boss_class(*boss_pos) 
         game.portal_offset = cfg.get('portal_offset', (300, 0))
         game.portal = None
     else:
@@ -227,6 +232,9 @@ def draw_game_scene(screen):
     for enemy in game.enemies:
         enemy.draw(screen, cam_x, cam_y)
     game.ui.draw_health_bar(screen, game.player.health, game.player.max_health)
+    if game.boss and game.boss.alive:
+        if game.boss.state not in ['idle', 'patrol']:
+            game.ui.draw_boss_health(screen, game.boss.health, game.boss.max_health)
 
 
 initial_assets = load_level_assets(1)
