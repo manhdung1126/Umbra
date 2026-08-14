@@ -6,10 +6,11 @@ from support import import_sprite_sheet
 class IceBoss(Boss):
     def __init__(self, x, y):
         super().__init__(x, y, max_health=100)
+        self.facing_right = False
 
         self.melee_damage = 30
-        self.attack_range = 230
-        self.notice_radius = 800
+        self.attack_range = 330
+        self.notice_radius = 450
         self.chase_speed = 2.5
         self.cooldown = 1200
 

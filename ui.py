@@ -4,23 +4,70 @@ class UI:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.font = pygame.font.SysFont('arial', 28)
-        self.font_large = pygame.font.SysFont('arial', 64)
+        self.font = pygame.font.SysFont('arial', 20, bold=True) 
+        scale = 2
 
-        self.health_bar_width = 300
-        self.health_bar_height = 30
-        self.health_bar_pos = (20, 20)
+        # player health bar
+        p_bar = pygame.image.load('graphics/ui/player_bar.png').convert_alpha()
+        p_health = pygame.image.load('graphics/ui/player_health.png').convert_alpha()
         
+        self.p_total_w = p_bar.get_width() * scale
+        self.p_total_h = p_bar.get_height() * scale
+        self.p_bar = pygame.transform.scale(p_bar, (self.p_total_w, self.p_total_h))
+        self.p_health = pygame.transform.scale(p_health, (self.p_total_w, self.p_total_h))
+        
+        self.player_pos = (20, 20)
+        self.p_empty_offset = int(self.p_health.get_width() * 0.28) 
+
+        # boss health bar
+        b_bar = pygame.image.load('graphics/ui/bossbar.png').convert_alpha()
+        b_health = pygame.image.load('graphics/ui/bosshealth.png').convert_alpha()
+        
+        self.b_total_w = b_bar.get_width() * scale
+        self.b_total_h = b_bar.get_height() * scale
+        self.b_bar = pygame.transform.scale(b_bar, (self.b_total_w, self.b_total_h))
+        self.b_health = pygame.transform.scale(b_health, (self.b_total_w, self.b_total_h))
+        
+        self.boss_pos = (self.width - self.b_total_w - 20, 20)
+        
+        # Tỉ lệ khu vực của thanh máu rồng
+        self.b_head_ratio = 0.18
+        self.b_bar_ratio = 0.78
 
     def draw_health_bar(self, screen, current_health, max_health):
-        x, y = self.health_bar_pos
-        health_ratio = max(current_health / max_health, 0)
+        ratio = max(current_health / max_health, 0)
+        screen.blit(self.p_bar, self.player_pos)
+        
+        total_w = self.p_health.get_width()
+        total_h = self.p_health.get_height()
+        
+        # Tính toán khu vực cần cắt của lớp máu xanh ngọc
+        fillable_w = total_w - self.p_empty_offset # Lọc bỏ phần trống của trái tim
+        crop_width = self.p_empty_offset + int(fillable_w * ratio) # Tổng pixel ngang cần giữ lại
+        
+        if crop_width > 0:
+            crop_rect = pygame.Rect(0, 0, crop_width, total_h)
+            cropped_img = self.p_health.subsurface(crop_rect)
+            screen.blit(cropped_img, self.player_pos)
+            
+        health_text = f"HP: {int(current_health)}/{int(max_health)}"
+        text_surf = self.font.render(health_text, True, (75, 180, 165))
+        text_rect = text_surf.get_rect(midleft=(self.player_pos[0] + total_w + 10, self.player_pos[1] + total_h // 2))
+        screen.blit(text_surf, text_rect)
 
-        pygame.draw.rect(screen, (60, 0, 0), (x, y, self.health_bar_width, self.health_bar_height))
-        pygame.draw.rect(screen, (200, 30, 30), (x, y, self.health_bar_width * health_ratio, self.health_bar_height))
-        pygame.draw.rect(screen, (255, 255, 255), (x, y, self.health_bar_width, self.health_bar_height), 3)
-
-        health =  f"{int(current_health)}/{int(max_health)}"
-        text_surf = self.font.render(health, True, (255, 255, 255))
-        text_rect = text_surf.get_rect(midleft=(x + self.health_bar_width + 15, y + self.health_bar_height // 2))
+    def draw_boss_health(self, screen, current_health, max_health):
+        screen.blit(self.b_bar, self.boss_pos)
+        ratio = max(current_health / max_health, 0)
+        head_w = int(self.b_total_w * self.b_head_ratio)
+        red_w = int(self.b_total_w * self.b_bar_ratio * ratio)
+        crop_width = head_w + red_w 
+        
+        if crop_width > 0:
+            crop_rect = pygame.Rect(0, 0, crop_width, self.b_total_h)
+            cropped_img = self.b_health.subsurface(crop_rect)
+            screen.blit(cropped_img, self.boss_pos)
+            
+        health_text = f"HP: {int(current_health)}/{int(max_health)}"
+        text_surf = self.font.render(health_text, True, (255, 100, 100))
+        text_rect = text_surf.get_rect(midright=(self.boss_pos[0] - 10, self.boss_pos[1] + self.b_total_h // 2))
         screen.blit(text_surf, text_rect)

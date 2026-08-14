@@ -232,6 +232,9 @@ def draw_game_scene(screen):
     for enemy in game.enemies:
         enemy.draw(screen, cam_x, cam_y)
     game.ui.draw_health_bar(screen, game.player.health, game.player.max_health)
+    if game.boss and game.boss.alive:
+        if game.boss.state not in ['idle', 'patrol']:
+            game.ui.draw_boss_health(screen, game.boss.health, game.boss.max_health)
 
 
 initial_assets = load_level_assets(1)

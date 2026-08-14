@@ -60,35 +60,15 @@ class Boss(Enemy):
         draw_rect = self.rect.move(-cam_x, -cam_y)
         screen.blit(self.image, draw_rect)
         
-        if self.alive:
-            draw_hitbox = self.hitbox.move(-cam_x, -cam_y)
-            pygame.draw.rect(screen, (255, 0, 0), draw_hitbox, 2) 
+        # if self.alive:
+        #     draw_hitbox = self.hitbox.move(-cam_x, -cam_y)
+        #     pygame.draw.rect(screen, (255, 0, 0), draw_hitbox, 2) 
 
-            center_x = self.hitbox.centerx - cam_x
-            center_y = self.hitbox.centery - cam_y
-            pygame.draw.circle(screen, (0, 255, 100, 80), (center_x, center_y), self.attack_range, 2)
+        #     center_x = self.hitbox.centerx - cam_x
+        #     center_y = self.hitbox.centery - cam_y
+        #     pygame.draw.circle(screen, (0, 255, 100, 80), (center_x, center_y), self.attack_range, 2)
 
-            attack_hitbox = self.get_attack_hitbox()
-            if attack_hitbox:
-                draw_attack_hitbox = attack_hitbox.move(-cam_x, -cam_y)
-                pygame.draw.rect(screen, (255, 255, 0), draw_attack_hitbox, 3)
-
-        self.draw_boss_health_bar(screen)
-
-    def draw_boss_health_bar(self, screen):
-        if self.health <= 0 and not self.alive:
-            return
-
-        bar_width = 600
-        bar_height = 20
-        x = (screen.get_width() - bar_width) // 2
-        y = screen.get_height() - 50
-
-        health_ratio = max(0, self.health / self.max_health)
-
-        # Viền ngoài
-        pygame.draw.rect(screen, (50, 50, 50), (x - 4, y - 4, bar_width + 8, bar_height + 8))
-        # Phần máu đã mất (Nền xám/đen)
-        pygame.draw.rect(screen, (30, 30, 30), (x, y, bar_width, bar_height))
-        # Phần máu hiện tại (Màu đỏ sẫm)
-        pygame.draw.rect(screen, (200, 20, 20), (x, y, bar_width * health_ratio, bar_height))
+        #     attack_hitbox = self.get_attack_hitbox()
+        #     if attack_hitbox:
+        #         draw_attack_hitbox = attack_hitbox.move(-cam_x, -cam_y)
+        #         pygame.draw.rect(screen, (255, 255, 0), draw_attack_hitbox, 3)

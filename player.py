@@ -336,11 +336,11 @@ class Player:
         draw_rect = self.rect.move(-cam_x, -cam_y)
         screen.blit(self.image, draw_rect)
         
-        if self.alive:
-            draw_hitbox = self.hitbox.move(-cam_x, -cam_y)
-            pygame.draw.rect(screen, (255, 0, 0), draw_hitbox, 2)
+        # if self.alive:
+        #     draw_hitbox = self.hitbox.move(-cam_x, -cam_y)
+        #     pygame.draw.rect(screen, (255, 0, 0), draw_hitbox, 2)
      
-            attack_hitbox = self.get_attack_hitbox()
-            if attack_hitbox:
-                draw_attack_hitbox = attack_hitbox.move(-cam_x, -cam_y)
-                pygame.draw.rect(screen, (255, 255, 0), draw_attack_hitbox, 2)
+        #     attack_hitbox = self.get_attack_hitbox()
+        #     if attack_hitbox:
+        #         draw_attack_hitbox = attack_hitbox.move(-cam_x, -cam_y)
+        #         pygame.draw.rect(screen, (255, 255, 0), draw_attack_hitbox, 2)
