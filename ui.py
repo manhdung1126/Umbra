@@ -10,6 +10,7 @@ class UI:
         self.health_bar_width = 300
         self.health_bar_height = 30
         self.health_bar_pos = (20, 20)
+        
 
     def draw_health_bar(self, screen, current_health, max_health):
         x, y = self.health_bar_pos
