@@ -17,7 +17,25 @@ class UI:
         self.p_health = pygame.transform.scale(p_health, (self.p_total_w, self.p_total_h))
         
         self.player_pos = (20, 20)
-        self.p_empty_offset = int(self.p_health.get_width() * 0.28) 
+        self.p_empty_offset = int(self.p_health.get_width() * 0.28)
+
+        # lives
+        heart_bg = pygame.image.load('graphics/ui/background.png').convert_alpha()
+        heart_border = pygame.image.load('graphics/ui/border.png').convert_alpha()
+        heart_full = pygame.image.load('graphics/ui/heart.png').convert_alpha()
+        heart_w = heart_bg.get_width() * scale
+        heart_h = heart_bg.get_height() * scale
+
+        self.heart_background = pygame.transform.scale(heart_bg, (heart_w, heart_h))
+        self.heart_border = pygame.transform.scale(heart_border, (heart_w, heart_h))
+        self.heart_full = pygame.transform.scale(heart_full, (heart_w, heart_h))
+
+        self.heart_size = (heart_w, heart_h)
+        self.heart_spacing = 8
+        self.lives_pos = (
+            self.player_pos[0] + 60,
+            self.player_pos[1] + self.p_total_h,
+        )
 
         # boss health bar
         b_bar = pygame.image.load('graphics/ui/bossbar.png').convert_alpha()
@@ -54,6 +72,18 @@ class UI:
         text_surf = self.font.render(health_text, True, (75, 180, 165))
         text_rect = text_surf.get_rect(midleft=(self.player_pos[0] + total_w + 10, self.player_pos[1] + total_h // 2))
         screen.blit(text_surf, text_rect)
+
+    def draw_lives(self, screen, current_lives, lives):
+        x, y = self.lives_pos
+        heart_w = self.heart_size[0]
+
+        for i in range(lives):
+            heart_x = x + i * (heart_w + self.heart_spacing)
+
+            screen.blit(self.heart_background, (heart_x, y))
+            if i < current_lives:
+                screen.blit(self.heart_full, (heart_x, y))
+            screen.blit(self.heart_border, (heart_x, y))
 
     def draw_boss_health(self, screen, current_health, max_health):
         screen.blit(self.b_bar, self.boss_pos)

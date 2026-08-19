@@ -7,6 +7,7 @@ from boss_ice import IceBoss
 from boss_witch import WitchBoss
 from chest import Chest
 from portal import Portal
+from checkpoint import Checkpoint
 from ui import UI
 from map_background import Background
 from main_menu import MainMenu, PauseMenu, GameOverMenu, VictoryMenu
@@ -34,6 +35,10 @@ LEVELS = {
         'decorfront': 'Map/level1_decorfront.csv',
         'tileset': 'Map/Snow platform tileset.png',
         'player_spawn': (48, 1152),
+        'checkpoints': [
+            (1338, 896),
+            (4398, 384),
+        ],
         'enemies': [
             (1168, 1280), (1776, 1216), (2512, 1216),
             (3272, 1216), (4056, 640),
@@ -53,6 +58,9 @@ LEVELS = {
         'decorfront': 'Map/level2_decorfront.csv',
         'tileset': 'Map/Snow platform tileset.png',
         'player_spawn': (48, 1152),
+        'checkpoints': [
+            (4594, 1216), (6574, 1024),
+        ],
         'enemies': [
             (1200, 1200), (2400, 1200), (2088, 192),
             (3408, 704), (4092, 1024)
@@ -71,6 +79,9 @@ LEVELS = {
         'decorfront': 'Map/level3_decorfront.csv',
         'tileset': 'Map/Snow platform tileset.png',
         'player_spawn': (48, 1152),
+        'checkpoints': [
+            (1648, 320), (6592, 640),
+        ],
         'enemies': [
             (1760, 320), (2728, 832), (4080, 256),
             (4056, 1216), (6586, 640)
@@ -137,7 +148,9 @@ def populate_entities(level_number):
 
     game.enemies = [Enemy(x, y) for (x, y) in cfg.get('enemies', [])]
     game.chests = [make_chest(chest_cfg) for chest_cfg in cfg.get('chests', [])]
+    game.checkpoints = [Checkpoint(x, y) for x, y in cfg.get('checkpoints', [])]
 
+    game.respawn_position = cfg['player_spawn']
     boss_pos = cfg.get('boss')
     boss_class = cfg.get('boss_class')
     if boss_pos and boss_class:
@@ -161,12 +174,20 @@ def start_game():
 
     spawn_x, spawn_y = LEVELS[1]['player_spawn']
     game.player = Player(spawn_x, spawn_y)
+    game.max_lives = 3
+    game.lives = game.max_lives
     populate_entities(1)
 
     game.camera_x = 0
     game.camera_y = 0
     change_state('playing')
 
+def respawn_at_checkpoint():
+    spawn_x, spawn_y = game.respawn_position
+    game.player = Player(spawn_x, spawn_y)
+
+    game.camera_x = max(0, spawn_x - game.WIDTH * 0.45)
+    game.camera_y = max(0, spawn_y - game.HEIGHT * 0.5)
 
 def restart_current_level():
     level = game.current_level
@@ -232,6 +253,7 @@ def draw_game_scene(screen):
     for enemy in game.enemies:
         enemy.draw(screen, cam_x, cam_y)
     game.ui.draw_health_bar(screen, game.player.health, game.player.max_health)
+    game.ui.draw_lives(screen, game.lives, game.max_lives)
     if game.boss and game.boss.alive:
         if game.boss.state not in ['idle', 'patrol']:
             game.ui.draw_boss_health(screen, game.boss.health, game.boss.max_health)
@@ -271,7 +293,10 @@ game = SimpleNamespace(
     current_level=1,
     camera_x=0,
     camera_y=0,
-
+    max_lives=3,
+    lives=3,
+    respawn_position=None,
+    checkpoints=[],
     **initial_assets,
 )
 
@@ -281,6 +306,7 @@ game.restart_current_level = restart_current_level
 game.advance_to_next_level = advance_to_next_level
 game.draw_game_scene = draw_game_scene
 game.get_camera_offset = get_camera_offset
+game.respawn_at_checkpoint = respawn_at_checkpoint
 
 states = {
     'menu': MenuState(game),

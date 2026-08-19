@@ -76,7 +76,16 @@ class PlayingState(State):
                 boss.attacking = False
                 boss.casting = False
             if player.frame_index >= len(player.animations['death']) - 1:
-                game.change_state('game_over')
+                if game.lives > 1:
+                    game.lives -= 1
+                    game.respawn_at_checkpoint()
+                else:
+                    game.change_state('game_over')
+
+        # Checkpoints
+        for checkpoint in game.checkpoints:
+            if checkpoint.check(player):
+                game.respawn_position = checkpoint.spawn_position
 
         # Enemies
         for enemy in enemies[:]:
@@ -182,7 +191,7 @@ class GameOverState(State):
     def handle_event(self, event):
         action = self.game.game_over_menu.handle_event(event)
         if action == 'restart':
-            self.game.restart_current_level()
+            self.game.start_game()
         elif action == 'quit':
             self.game.change_state('menu')
 
