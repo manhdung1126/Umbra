@@ -10,10 +10,12 @@ from portal import Portal
 from checkpoint import Checkpoint
 from ui import UI
 from map_background import Background
+from audio import MusicManager
 from main_menu import MainMenu, PauseMenu, GameOverMenu, VictoryMenu
 from game_states import MenuState, PlayingState, PausedState, GameOverState, VictoryState
 from tilemap import build_rect_from_csv, get_map_size, load_csv_map, build_tile_cache, draw_tile_layer
 
+pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.init()
 
 WIDTH = 1440
@@ -144,6 +146,7 @@ def make_chest(chest_cfg):
 
 
 def populate_entities(level_number):
+    game.boss_music_started = False
     cfg = LEVELS[level_number]
 
     game.enemies = [Enemy(x, y) for (x, y) in cfg.get('enemies', [])]
@@ -164,7 +167,6 @@ def populate_entities(level_number):
         portal_pos = cfg.get('portal_pos')
         game.portal = Portal(*portal_pos) if portal_pos else None
 
-
 def change_state(state_name):
     game.current_state = states[state_name]
 
@@ -176,10 +178,12 @@ def start_game():
     game.player = Player(spawn_x, spawn_y)
     game.max_lives = 3
     game.lives = game.max_lives
+    game.lives_at_level_start = game.lives
     populate_entities(1)
 
     game.camera_x = 0
     game.camera_y = 0
+    game.music.play('play')
     change_state('playing')
 
 def respawn_at_checkpoint():
@@ -191,6 +195,7 @@ def respawn_at_checkpoint():
 
 def restart_current_level():
     level = game.current_level
+    game.lives = game.lives_at_level_start
 
     apply_level_assets(level)
 
@@ -200,6 +205,8 @@ def restart_current_level():
 
     game.camera_x = 0
     game.camera_y = 0
+    game.music.play('play', force=True)
+    game.boss_music_started = False
     change_state('playing')
 
 
@@ -210,12 +217,16 @@ def advance_to_next_level():
         return
 
     apply_level_assets(next_level)
+    game.lives_at_level_start = game.lives
 
     spawn_x, spawn_y = LEVELS[next_level]['player_spawn']
     game.player.hitbox.bottomleft = (spawn_x, spawn_y)
     game.player.velocity_y = 0
 
     populate_entities(next_level)
+
+    game.music.play('play')
+    game.boss_music_started = False
 
     game.camera_x = 0
     game.camera_y = 0
@@ -282,6 +293,8 @@ game = SimpleNamespace(
     victory_menu=VictoryMenu(WIDTH, HEIGHT),
     ui=UI(WIDTH, HEIGHT),
     background=Background(WIDTH, HEIGHT),
+    music=MusicManager(),
+    boss_music_started=False,
 
     player=None,
     enemies=[],
@@ -295,6 +308,7 @@ game = SimpleNamespace(
     camera_y=0,
     max_lives=3,
     lives=3,
+    lives_at_level_start=3,
     respawn_position=None,
     checkpoints=[],
     **initial_assets,
