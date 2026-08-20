@@ -27,7 +27,7 @@ class WitchBoss(Boss):
         self.cast_cooldown = 2500
         self.cast_time = 0
         self.cast_spawn_frame = 6
-        self.spell_spawn = False
+        self.spell_spawned = False
         self.spell_target_x = 0
         self.spell_ground_y = 0
         self.spell_width = 140

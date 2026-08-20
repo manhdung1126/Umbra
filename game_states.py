@@ -25,6 +25,7 @@ class MenuState(State):
             self.game.running = False
 
     def update(self):
+        self.game.music.play('menu')
         self.game.main_menu.update()
 
     def draw(self, screen):
@@ -76,7 +77,16 @@ class PlayingState(State):
                 boss.attacking = False
                 boss.casting = False
             if player.frame_index >= len(player.animations['death']) - 1:
-                game.change_state('game_over')
+                if game.lives > 1:
+                    game.lives -= 1
+                    game.respawn_at_checkpoint()
+                else:
+                    game.change_state('game_over')
+
+        # Checkpoints
+        for checkpoint in game.checkpoints:
+            if checkpoint.check(player):
+                game.respawn_position = checkpoint.spawn_position
 
         # Enemies
         for enemy in enemies[:]:
@@ -90,6 +100,11 @@ class PlayingState(State):
         # Boss
         if boss:
             boss.update(game.solid_platforms, game.all_platforms, player)
+
+            boss_is_active = boss.alive and boss.state in {'chase', 'attack', 'melee', 'cast'}
+            if boss_is_active and not game.boss_music_started:
+                game.music.play('boss')
+                game.boss_music_started = True
 
             # Boss vừa chết -> mở cổng dịch chuyển cạnh vị trí spawn của boss
             if not boss.alive and not game.portal and game.boss_spawn_pos:
@@ -159,11 +174,13 @@ class PlayingState(State):
 class PausedState(State):
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.game.music.resume()
             self.game.change_state('playing')
             return
 
         action = self.game.pause_menu.handle_event(event)
         if action == 'resume':
+            self.game.music.resume()
             self.game.change_state('playing')
         elif action == 'restart':
             self.game.restart_current_level()
@@ -171,6 +188,7 @@ class PausedState(State):
             self.game.change_state('menu')
 
     def update(self):
+        self.game.music.pause()
         self.game.pause_menu.update()
 
     def draw(self, screen):
@@ -182,11 +200,12 @@ class GameOverState(State):
     def handle_event(self, event):
         action = self.game.game_over_menu.handle_event(event)
         if action == 'restart':
-            self.game.restart_current_level()
+            self.game.start_game()
         elif action == 'quit':
             self.game.change_state('menu')
 
     def update(self):
+        self.game.music.stop()
         self.game.game_over_menu.update()
 
     def draw(self, screen):
@@ -203,6 +222,7 @@ class VictoryState(State):
             self.game.change_state('menu')
 
     def update(self):
+        self.game.music.stop()
         self.game.victory_menu.update()
 
     def draw(self, screen):
